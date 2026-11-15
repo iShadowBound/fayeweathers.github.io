@@ -308,11 +308,11 @@
       <span class="music-disc" id="music-disc" aria-hidden="true">
         <span class="eq"><i></i><i></i><i></i><i></i></span>
       </span>
-      <span class="music-label"><strong id="music-title">أغنيتك الخاصة</strong><span id="music-status">اضغط للتشغيل</span></span>
+      <span class="music-label"><strong id="music-title">أغنيتك الخاصة</strong><span id="music-status">جاري تشغيل الأغنية...</span></span>
     </button>
   </aside>
 
-  <audio id="birthday-audio" src="birthday.mp3" preload="auto" loop></audio>
+  <audio id="birthday-audio" src="birthday.mp3" preload="auto" loop autoplay></audio>
 
   <script>
     const senders = [
@@ -446,18 +446,36 @@
       }
     }
 
-    /* ===== الموسيقى (MP3) ===== */
+    /* ===== الموسيقى (MP3) — تشتغل تلقائياً ===== */
     const musicDock = document.getElementById('music-dock');
     const musicTrigger = document.getElementById('music-trigger');
     const musicStatus = document.getElementById('music-status');
     const audio = document.getElementById('birthday-audio');
+    audio.volume = 0.75;
+
+    let needsUnmute = false;
 
     function setPlayingUI(isPlaying) {
       musicDock.classList.toggle('is-playing', isPlaying);
-      musicStatus.textContent = isPlaying ? 'شغالة الآن — اضغط للإيقاف' : 'اضغط للتشغيل';
+      if (isPlaying) {
+        musicStatus.textContent = needsUnmute
+          ? 'الصوت مكتوم — اضغط في أي مكان لتشغيله'
+          : 'شغالة الآن — اضغط للإيقاف';
+      } else {
+        musicStatus.textContent = 'اضغط للتشغيل';
+      }
+    }
+
+    function unmuteAudio() {
+      if (!needsUnmute) return;
+      needsUnmute = false;
+      audio.muted = false;
+      if (audio.paused) audio.play().catch(() => {});
+      setPlayingUI(true);
     }
 
     function toggleMusic() {
+      if (needsUnmute) { unmuteAudio(); return; }
       if (audio.paused) {
         audio.play().then(() => setPlayingUI(true)).catch(() => {
           musicStatus.textContent = 'تعذّر التشغيل — تأكد أن birthday.mp3 بجانب الملف';
@@ -476,12 +494,47 @@
 
     musicTrigger.addEventListener('click', toggleMusic);
     document.getElementById('musicCta').addEventListener('click', () => {
+      if (needsUnmute) { unmuteAudio(); return; }
       if (audio.paused) toggleMusic();
-      else {
-        audio.currentTime = 0;
-        audio.play();
-      }
+      else { audio.currentTime = 0; audio.play().catch(() => {}); }
     });
+
+    /* ===== محاولة تشغيل الأغنية تلقائياً ===== */
+    function tryAutoplay() {
+      audio.muted = false;
+      const p = audio.play();
+      if (!p || typeof p.then !== 'function') return;
+
+      p.then(() => {
+        setPlayingUI(true);
+      }).catch(() => {
+        // محاولة 2: تشغيل مكتوم (مسموح في أغلب المتصفحات)
+        audio.muted = true;
+        audio.play().then(() => {
+          needsUnmute = true;
+          setPlayingUI(true);
+          // أي ضغطة/مفتاح يفتح الصوت تلقائياً
+          document.addEventListener('click', unmuteAudio, { once: true });
+          document.addEventListener('keydown', unmuteAudio, { once: true });
+        }).catch(() => {
+          // محاولة 3: انتظار أول تفاعل من المستخدم
+          musicStatus.textContent = 'اضغط في أي مكان لتشغيل الأغنية';
+          const startOnGesture = () => {
+            audio.muted = false;
+            audio.play().then(() => setPlayingUI(true)).catch(() => {});
+          };
+          document.addEventListener('click', startOnGesture, { once: true });
+          document.addEventListener('keydown', startOnGesture, { once: true });
+          document.addEventListener('touchstart', startOnGesture, { once: true, passive: true });
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryAutoplay);
+    } else {
+      tryAutoplay();
+    }
   </script>
 </body>
 </html>
