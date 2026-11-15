@@ -1,2096 +1,487 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShadowBound</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23050505'/><path d='M30 35 ShadowBound5 50 L30 65 M50 65 L70 65' stroke='%23b0b0b0' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="Referrer-Policy" content="no-referrer">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="ShadowBound | AI Engineering Student & Developer">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Fira+Code:wght@400;700&display=swap');
-
-        :root {
-            --bg-dark: #050505;
-            --bg-card: #0d0d0d;
-            --text-main: #f0f0f0;
-            --text-dim: #888888;
-            --border-color: #222222;
-            --terminal-green: #b0b0b0;
-            --terminal-green-bright: #e6e6e6;
-            --terminal-green-soft: rgba(176,176,176,.18);
-            --terminal-red: #ff3b30;
-            --status-live: var(--terminal-green-bright);
-            --status-dev:  var(--terminal-green);
-            --status-beta: var(--text-dim);
-            --presence-online: #27c93f;
-            --presence-idle: #ffbd2e;
-            --presence-dnd: #ff3b30;
-            --presence-offline: #555555;
-        }
-
-        html { scroll-behavior: smooth; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--terminal-green); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--terminal-green-bright); box-shadow: 0 0 12px var(--terminal-green); }
-        section { scroll-margin-top: 120px; }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            cursor: none !important;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Cairo', sans-serif;
-            overflow-x: hidden;
-            transition: all .3s ease;
-        }
-
-        .cursor-glow {
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, rgba(176,176,176,.28) 0%, transparent 70%);
-            border-radius: 50%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%,-50%);
-            transition: transform .05s linear, width .2s, height .2s, background .2s;
-        }
-
-        .cursor-glow.click-effect {
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(255,255,255,.25) 0%, transparent 70%);
-        }
-
-        nav {
-            position: fixed;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(13,13,13,.8);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--terminal-green);
-            padding: 10px 25px;
-            border-radius: 50px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 1000;
-            box-shadow: 0 0 10px rgba(176,176,176,.28), 0 0 22px rgba(176,176,176,.12), 0 10px 30px rgba(0,0,0,.5);
-            width: 90%;
-            max-width: 900px;
-            direction: ltr;
-            transition: all .4s ease;
-        }
-
-        nav.nav-colored {
-            background: rgba(176,176,176,.15);
-            border-color: var(--terminal-green-bright);
-            box-shadow: 0 0 25px rgba(176,176,176,.45), 0 0 55px rgba(176,176,176,.2), 0 10px 30px rgba(0,0,0,.5);
-            backdrop-filter: blur(25px);
-        }
-
-        .nav-brand {
-            color: var(--text-main);
-            font-family: 'Fira Code', monospace;
-            font-size: 1.25rem;
-            font-weight: bold;
-            text-decoration: none;
-            transition: .3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .nav-brand i {
-            color: var(--terminal-green);
-            font-size: 1.1rem;
-        }
-
-        .nav-brand:hover { color: var(--terminal-green); }
-        .nav-content-wrapper { display: flex; align-items: center; gap: 20px; direction: ltr !important; }
-        .nav-links { display: flex; gap: 25px; align-items: center; }
-        .nav-actions { display: flex; align-items: center; gap: 15px; }
-
-        .nav-links a {
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: 700;
-            font-size: .95rem;
-            transition: .3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: inherit;
-        }
-
-        .nav-links a:hover { color: #fff; text-shadow: 0 0 10px white; }
-        .nav-links a.active-link { color: var(--terminal-green); text-shadow: 0 0 10px rgba(176,176,176,.75), 0 0 22px rgba(176,176,176,.35); }
-
-        .lang-btn {
-            background: var(--text-main);
-            color: var(--bg-dark);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-family: 'Fira Code', monospace;
-            border: none;
-            font-weight: bold;
-            transition: .3s;
-        }
-
-        .lang-btn:hover { background: #fff; color: #000; transform: scale(1.05); }
-        .mobile-lang-btn { display: none; }
-        .desktop-lang-btn { display: block; }
-
-        .menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text-main);
-            font-size: 1.3rem;
-            cursor: pointer !important;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 140px 20px 60px;
-            display: flex;
-            flex-direction: column;
-            gap: 90px;
-        }
-
-        .hero { 
-            display: flex; 
-            flex-direction: row; 
-            align-items: center; 
-            justify-content: space-between; 
-            flex-wrap: wrap-reverse; 
-            gap: 40px; 
-            direction: ltr; 
-        }
-        
-        .hero-text { 
-            flex: 1; 
-            min-width: 300px; 
-            direction: inherit; 
-            text-align: start;
-        }
-
-        .terminal {
-            background: var(--bg-card);
-            border: 1px solid var(--terminal-green);
-            box-shadow: 0 0 10px rgba(176,176,176,.28), 0 10px 30px rgba(0,0,0,.8);
-            border-radius: 10px;
-            padding: 20px;
-            font-family: 'Fira Code', monospace;
-            font-size: .9rem;
-            color: var(--terminal-green);
-            direction: ltr;
-            text-align: left;
-            min-height: 140px;
-            width: 100%;
-        }
-
-        .terminal-header {
-            display: flex;
-            flex-direction: row-reverse;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 8px;
-        }
-
-        .terminal-dots { display: flex; gap: 8px; }
-        .terminal-dots span { width: 12px; height: 12px; border-radius: 50%; }
-        .dot-red { background: #ff5f56; }
-        .dot-yellow { background: #ffbd2e; }
-        .dot-green { background: #27c93f; }
-        .terminal-time { font-size: .75rem; color: #666; font-family: 'Fira Code', monospace; }
-        
-        .terminal p { 
-            margin-bottom: 8px; 
-            min-height: 20px; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-        }
-        
-        .terminal-static { color: #555; }
-
-        .blinking-cursor {
-            display: inline-block;
-            width: 8px;
-            height: 15px;
-            background-color: var(--terminal-green);
-            animation: blink 1s step-end infinite;
-            vertical-align: middle;
-            margin-left: 2px;
-        }
-
-        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-
-        .activity-card {
-            margin-top: 20px;
-            background: rgba(13, 13, 13, 0.7);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(176, 176, 176, 0.15);
-            border-radius: 14px;
-            padding: 20px;
-            direction: ltr;
-            text-align: left;
-            position: relative;
-            overflow: hidden;
-            transform-style: preserve-3d;
-            will-change: transform;
-            transition: border-color 0.4s ease, box-shadow 0.4s ease;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
-        }
-
-        .activity-card::before {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            background: linear-gradient(45deg, transparent, rgba(176,176,176,0.3), transparent);
-            z-index: -1;
-            border-radius: inherit;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .activity-card:hover {
-            border-color: rgba(176, 176, 176, 0.5);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(176, 176, 176, 0.1);
-        }
-
-        .activity-card:hover::before {
-            opacity: 1;
-            animation: scanline 2s linear infinite;
-        }
-
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-        }
-
-        .activity-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding-bottom: 12px;
-            margin-bottom: 14px;
-            border-bottom: 1px dashed rgba(176,176,176,0.2);
-            position: relative;
-            z-index: 1;
-            transform: translateZ(10px);
-        }
-
-        .activity-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: 'Fira Code', monospace;
-            font-size: .8rem;
-            color: var(--text-main);
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .activity-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--presence-offline);
-            color: var(--presence-offline);
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-        }
-
-        .activity-dot[data-s="online"] { background: var(--presence-online); color: var(--presence-online); box-shadow: 0 0 12px currentColor; animation: status-blink 2s ease-in-out infinite; }
-        .activity-dot[data-s="idle"] { background: var(--presence-idle); color: var(--presence-idle); box-shadow: 0 0 12px currentColor; }
-        .activity-dot[data-s="dnd"] { background: var(--presence-dnd); color: var(--presence-dnd); box-shadow: 0 0 12px currentColor; }
-
-        .activity-custom {
-            font-size: .78rem;
-            color: var(--text-dim);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            min-width: 0;
-        }
-
-        .activity-list { display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 1; }
-
-        .activity-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 16px; 
-            transition: transform 0.3s ease;
-            transform: translateZ(20px);
-        }
-
-        .activity-art {
-            width: 72px;
-            height: 72px;
-            border-radius: 12px;
-            border: 1px solid rgba(176,176,176,0.2);
-            background: rgba(176,176,176,.06);
-            flex-shrink: 0;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        .activity-card:hover .activity-art {
-            transform: scale(1.1) rotate(2deg) translateZ(30px);
-            border-color: var(--terminal-green);
-            box-shadow: 0 0 25px rgba(176,176,176,.4);
-        }
-
-        .activity-art i {
-            font-size: 1.8rem;
-            color: var(--terminal-green);
-            text-shadow: 0 0 15px rgba(176,176,176,.5);
-        }
-
-        .activity-art img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background: var(--bg-card);
-        }
-
-        .activity-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; text-align: start; }
-
-        .activity-type {
-            font-family: 'Fira Code', monospace;
-            font-size: .7rem;
-            color: var(--terminal-green);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .activity-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #fff;
-            font-family: 'Cairo', sans-serif;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            transition: color 0.3s ease;
-        }
-        
-        .activity-card:hover .activity-name {
-            color: var(--terminal-green-bright);
-            text-shadow: 0 0 10px rgba(230,230,230,0.4);
-        }
-
-        .activity-line {
-            font-size: .8rem;
-            color: var(--text-dim);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            margin: 0;
-        }
-
-        .activity-time {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 6px;
-            font-family: 'Fira Code', monospace;
-            font-size: .7rem;
-            color: var(--text-dim);
-            direction: ltr;
-        }
-
-        .activity-bar {
-            flex: 1;
-            height: 4px;
-            border-radius: 4px;
-            background: rgba(176,176,176,0.1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .activity-bar span {
-            display: block;
-            height: 100%;
-            width: 0;
-            background: var(--terminal-green);
-            box-shadow: 0 0 12px rgba(176,176,176,1);
-            transition: width .5s linear;
-            position: relative;
-        }
-        
-        .activity-bar span::after {
-            content: '';
-            position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-            animation: shimmer 1.5s infinite;
-            transform: translateX(-100%);
-        }
-
-        @keyframes shimmer {
-            100% { transform: translateX(100%); }
-        }
-
-        .activity-empty {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-dim);
-            font-size: .85rem;
-        }
-
-        .activity-empty i { font-size: 1.3rem; color: var(--terminal-green); }
-
-        .hero-image {
-            width: 320px;
-            height: 320px;
-            border: 2px solid var(--terminal-green);
-            box-shadow: 0 0 25px rgba(176,176,176,.22), 0 0 55px rgba(176,176,176,.08);
-            animation: complex-morph 12s ease-in-out infinite alternate;
-            position: relative;
-            overflow: visible;
-            background: linear-gradient(135deg, #0a0a0a 0%, #181818 50%, #0a0a0a 100%);
-            flex-shrink: 0;
-        }
-
-        .hero-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            border-radius: inherit;
-            opacity: 0;
-            transition: opacity .5s ease;
-        }
-
-        .hero-image img.loaded {
-            opacity: 1;
-        }
-
-        .hero-image::after {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            border: 1px solid var(--terminal-green);
-            box-shadow: 0 0 10px rgba(176,176,176,.28), 0 10px 30px rgba(0,0,0,.8);
-            animation: complex-morph 15s ease-in-out infinite alternate-reverse;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        @keyframes complex-morph {
-            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-            25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
-            50% { border-radius: 50% 50% 30% 70% / 30% 70% 50% 50%; }
-            75% { border-radius: 70% 30% 50% 50% / 60% 40% 70% 30%; }
-            100% { border-radius: 40% 70% 60% 40% / 40% 50% 40% 70%; }
-        }
-
-        .tech-badge {
-            position: absolute;
-            bottom: -10px;
-            left: -10px;
-            z-index: 10;
-            background: var(--bg-dark);
-            border: 2px solid var(--terminal-green);
-            border-radius: 50%;
-            width: 70px;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(176,176,176,.5), 0 0 60px rgba(176,176,176,.2);
-            animation: badge-pulse 2.5s ease-in-out infinite;
-            direction: ltr;
-        }
-
-        .tech-badge i { font-size: 1.8rem; color: var(--terminal-green); text-shadow: 0 0 15px rgba(176,176,176,.8); }
-        .tech-badge .fa-microchip { position: absolute; font-size: 2rem; }
-        .tech-badge .fa-code { position: absolute; font-size: .9rem; top: 8px; right: 8px; }
-        .tech-badge .fa-shield-halved { position: absolute; font-size: .9rem; bottom: 8px; left: 8px; }
-
-        @keyframes badge-pulse {
-            0%,100% { box-shadow: 0 0 20px rgba(176,176,176,.5), 0 0 60px rgba(176,176,176,.2); }
-            50% { box-shadow: 0 0 35px rgba(176,176,176,.8), 0 0 80px rgba(176,176,176,.4); }
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 35px;
-            font-size: 1.8rem;
-            font-family: 'Fira Code', monospace;
-        }
-
-        .section-header::before, .section-header::after {
-            content: '';
-            height: 2px;
-            width: 40px;
-            background: var(--terminal-green);
-        }
-
-        .about-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            padding: 45px 40px;
-            border-radius: 12px;
-            text-align: center;
-            line-height: 1.8;
-            font-size: 1rem;
-            position: relative;
-            border-inline-start: 5px solid var(--terminal-green);
-            box-shadow: inset 0 0 30px rgba(0,0,0,.5), 0 0 18px rgba(176,176,176,.08);
-            transition: transform .3s, box-shadow .3s;
-            margin: 0 auto;
-            overflow: hidden;
-        }
-
-        html[dir="rtl"] .about-box {
-            border-right: 5px solid var(--terminal-green);
-            border-left: 1px solid var(--border-color);
-            box-shadow: inset -18px 0 35px -28px var(--terminal-green), 0 0 18px rgba(176,176,176,.08);
-        }
-
-        html[dir="ltr"] .about-box {
-            border-left: 5px solid var(--terminal-green);
-            border-right: 1px solid var(--border-color);
-            box-shadow: inset 18px 0 35px -28px var(--terminal-green), 0 0 18px rgba(176,176,176,.08);
-        }
-
-        .about-box:hover { transform: translateY(-3px); }
-
-        .about-lead {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1.95;
-            padding: 0 10px;
-            margin-bottom: 32px;
-        }
-
-        .about-focus-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
-            margin: 28px 0 32px;
-        }
-
-        .focus-card {
-            background: rgba(176,176,176,.04);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 20px 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            transition: all .3s ease;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .focus-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, transparent 40%, rgba(176,176,176,.1) 50%, transparent 60%);
-            transform: translateX(-100%);
-            transition: transform .7s ease;
-            pointer-events: none;
-        }
-
-        .focus-card:hover::before { transform: translateX(100%); }
-
-        .focus-card:hover {
-            border-color: var(--terminal-green);
-            transform: translateY(-3px);
-            box-shadow: 0 0 22px rgba(176,176,176,.14);
-        }
-
-        .focus-card i {
-            font-size: 1.7rem;
-            color: var(--terminal-green);
-            text-shadow: 0 0 15px rgba(176,176,176,.4);
-            transition: transform .3s ease;
-        }
-
-        .focus-card:hover i { transform: scale(1.15) rotate(-5deg); }
-
-        .focus-card h4 {
-            font-size: 0.95rem;
-            color: #fff;
-            margin: 0;
-            font-family: 'Fira Code', monospace;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .focus-card p {
-            font-size: .78rem;
-            color: var(--text-dim);
-            line-height: 1.65;
-            margin: 0;
-        }
-
-        .about-skills-block { margin: 30px 0 26px; }
-
-        .about-skills-block h4 {
-            font-size: .9rem;
-            color: var(--terminal-green);
-            margin-bottom: 16px;
-            font-family: 'Fira Code', monospace;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .skill-chips {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .skill-chip {
-            background: rgba(176,176,176,.07);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: .78rem;
-            font-family: 'Fira Code', monospace;
-            transition: all .3s ease;
-        }
-
-        .skill-chip:hover {
-            background: var(--terminal-green);
-            color: var(--bg-dark);
-            border-color: var(--terminal-green-bright);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(176,176,176,.3);
-        }
-
-        .about-paragraph {
-            font-size: .92rem;
-            color: #c9c9c9;
-            padding: 18px 10px 0;
-            border-top: 1px dashed var(--border-color);
-            margin-top: 12px;
-            line-height: 1.85;
-            text-align: start;
-        }
-
-        .about-closing {
-            font-size: .88rem;
-            color: var(--text-dim);
-            padding: 16px 10px 0;
-            line-height: 1.75;
-            text-align: start;
-        }
-
-        .author-signature {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--terminal-green);
-            font-family: 'Fira Code', monospace;
-            margin-top: 26px;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            perspective: 1000px;
-        }
-
-        @media (min-width: 830px) {
-            .project-card:last-child:nth-child(3n + 1) {
-                grid-column: 2 / 3;
-            }
-        }
-
-        @media (min-width: 769px) and (max-width: 829px) {
-            .project-card:last-child:nth-child(2n + 1) {
-                grid-column: 1 / -1;
-                justify-self: center;
-                width: calc((100% - 20px) / 2);
-            }
-        }
-
-        .project-card {
-            --mouse-x: 50%;
-            --mouse-y: 50%;
-            background-color: var(--bg-card);
-            background-image: radial-gradient(circle 140px at var(--mouse-x) var(--mouse-y), rgba(176,176,176,.12), transparent 65%);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 26px 18px 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color .3s ease, box-shadow .3s ease, transform 0.1s ease-out;
-            position: relative;
-            overflow: hidden;
-            aspect-ratio: 1 / 1;
-            gap: 8px;
-            transform-style: preserve-3d;
-            will-change: transform;
-        }
-
-        .project-card:hover {
-            border-color: var(--terminal-green);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(176,176,176,.15), inset 0 0 20px rgba(176,176,176,.05);
-            z-index: 10;
-        }
-
-        .project-card:active {
-            transform: scale(0.98) !important;
-            transition-duration: .1s;
-        }
-
-        .project-status {
-            position: absolute;
-            top: 12px;
-            left: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 9px;
-            border-radius: 12px;
-            font-family: 'Fira Code', monospace;
-            font-size: .6rem;
-            letter-spacing: .5px;
-            text-transform: uppercase;
-            font-weight: 700;
-            border: 1px solid var(--border-color);
-            background: rgba(10, 10, 10, .72);
-            box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.4);
-            backdrop-filter: blur(8px);
-            z-index: 2;
-            transform: translateZ(20px);
-        }
-
-        .project-status .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
-            box-shadow: 0 0 6px currentColor;
-            animation: status-blink 2s ease-in-out infinite;
-        }
-
-        @keyframes status-blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
-
-        .project-status[data-status="live"] { color: var(--status-live); border-color: rgba(230, 230, 230, .30); }
-        .project-status[data-status="dev"]  { color: var(--status-dev);  border-color: rgba(176, 176, 176, .25); }
-        .project-status[data-status="beta"] { color: var(--status-beta); border-color: rgba(136, 136, 136, .22); }
-
-        .project-icon {
-            font-size: 2.2rem;
-            color: var(--terminal-green);
-            margin-top: 8px;
-            margin-bottom: 5px;
-            text-shadow: 0 0 15px rgba(176,176,176,.5);
-            transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275), text-shadow .3s ease;
-            transform: translateZ(30px);
-        }
-
-        .project-card:hover .project-icon {
-            transform: translateZ(40px) scale(1.15) rotate(-5deg);
-            text-shadow: 0 0 25px rgba(176,176,176,.8), 0 0 50px rgba(176,176,176,.4);
-        }
-
-        .project-title {
-            font-size: 1.05rem;
-            font-weight: bold;
-            margin-bottom: 3px;
-            color: var(--text-main);
-            font-family: 'Fira Code', monospace;
-            direction: ltr;
-            transition: color .3s ease, text-shadow .3s ease;
-            transform: translateZ(20px);
-        }
-
-        .project-card:hover .project-title {
-            color: #fff;
-            text-shadow: 0 0 12px rgba(230,230,230,.4);
-        }
-
-        .project-desc {
-            font-size: .78rem;
-            color: var(--text-dim);
-            line-height: 1.55;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            transition: color .3s ease;
-            transform: translateZ(10px);
-        }
-
-        .project-card:hover .project-desc {
-            color: #b0b0b0;
-        }
-
-        .project-tech-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            justify-content: center;
-            margin-top: auto;
-            padding-top: 8px;
-            width: 100%;
-            transform: translateZ(15px);
-        }
-
-        .project-tech-tags span {
-            background: rgba(176,176,176,.08);
-            border: 1px solid var(--border-color);
-            color: var(--terminal-green);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: .65rem;
-            font-family: 'Fira Code', monospace;
-            white-space: nowrap;
-            transition: all .3s ease;
-        }
-
-        .project-card:hover .project-tech-tags span {
-            background: rgba(176,176,176,.15);
-            border-color: rgba(176,176,176,.4);
-            color: #fff;
-        }
-
-        .project-card:hover .project-tech-tags span:nth-child(1) { transform: translateY(-2px); transition-delay: 0s; }
-        .project-card:hover .project-tech-tags span:nth-child(2) { transform: translateY(-2px); transition-delay: .05s; }
-        .project-card:hover .project-tech-tags span:nth-child(3) { transform: translateY(-2px); transition-delay: .1s; }
-        .project-card:hover .project-tech-tags span:nth-child(4) { transform: translateY(-2px); transition-delay: .15s; }
-
-        .social-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 15px; }
-
-        .social-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            padding: 25px 15px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            font-size: 1.1rem;
-            font-family: 'Fira Code', monospace;
-            text-decoration: none;
-            color: var(--text-dim);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .social-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-            transform: skewX(-25deg);
-            transition: left 0.6s ease;
-        }
-
-        .social-card:hover::before {
-            left: 200%;
-        }
-
-        .social-card:hover {
-            border-color: var(--terminal-green);
-            color: #fff;
-            transform: translateY(-6px) scale(1.02);
-            background: rgba(176,176,176,.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(176,176,176,.15);
-        }
-
-        .social-card span { 
-            direction: ltr; 
-            unicode-bidi: embed; 
-            display: inline-block; 
-            transition: transform 0.3s ease;
-        }
-
-        .social-card:hover span {
-            transform: translateY(-2px);
-            font-weight: bold;
-        }
-
-        .social-icon {
-            font-size: 2.2rem;
-            color: var(--terminal-green);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 0 0 10px rgba(176,176,176,.35);
-        }
-
-        .social-card:hover .social-icon {
-            transform: scale(1.3) translateY(-5px) rotate(5deg);
-            color: #fff;
-            text-shadow: 0 0 25px rgba(255,255,255,.8), 0 0 40px rgba(176,176,176,.6);
-        }
-
-        footer {
-            text-align: center;
-            padding: 30px 20px;
-            font-family: 'Fira Code', monospace;
-            font-size: .85rem;
-            color: var(--text-dim);
-            border-top: 1px solid var(--border-color);
-            margin-top: 40px;
-            direction: ltr;
-        }
-
-        footer p { margin: 6px 0; }
-        .footer-terminal { color: #fff; }
-        .latency-text { color: var(--terminal-green); font-weight: bold; }
-
-        @media (max-width:768px) {
-            * { cursor: auto !important; }
-            .cursor-glow { display: none !important; }
-            nav { width: 90%; padding: 12px 20px; border-radius: 30px; }
-            .menu-btn { display: block; }
-            .desktop-lang-btn { display: none; }
-
-            .nav-links {
-                display: none;
-                flex-direction: column;
-                position: absolute;
-                top: 60px;
-                right: 0;
-                width: 220px;
-                background: rgba(13,13,13,.95);
-                border: 1px solid var(--border-color);
-                border-radius: 15px;
-                padding: 20px;
-                gap: 20px;
-                box-shadow: 0 10px 30px rgba(0,0,0,.7);
-            }
-
-            .nav-links.active { display: flex; }
-            .nav-links a { justify-content: center; font-size: 1.1rem; width: 100%; }
-            .mobile-lang-btn { display: block; margin: 5px auto 0; width: 50%; }
-            
-            .hero { flex-direction: column; text-align: center; gap: 30px; }
-            .hero-image { margin: 0 auto; width: 260px; height: 260px; }
-            .hero-text { text-align: center; }
-
-            .activity-card { padding: 16px; }
-            .activity-art { width: 56px; height: 56px; }
-
-            .about-box {
-                padding: 32px 18px;
-                font-size: .92rem;
-                border-top: 1px solid var(--terminal-green);
-                border-inline-start: 4px solid var(--terminal-green);
-            }
-
-            .about-lead { font-size: 1rem; padding: 0; }
-            .about-focus-grid { grid-template-columns: 1fr; gap: 12px; }
-            .about-skills-block { margin: 20px 0; }
-            .about-paragraph { font-size: .87rem; padding: 15px 0 0; }
-            .about-closing { font-size: .83rem; padding: 14px 0 0; }
-
-            .tech-badge { width: 60px; height: 60px; bottom: -8px; left: -8px; }
-            .tech-badge .fa-microchip { font-size: 1.6rem; }
-            .tech-badge .fa-code, .tech-badge .fa-shield-halved { font-size: .8rem; }
-
-            .projects-grid { grid-template-columns: 1fr; }
-            .project-card { aspect-ratio: auto; min-height: 220px; padding: 24px 16px 14px; }
-            
-            .project-card:hover, .activity-card:hover {
-                transform: none !important;
-            }
-
-            .modal-content { padding: 25px 20px; }
-            .modal-title { font-size: 1.4rem; }
-        }
-        
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.85);
-            backdrop-filter: blur(10px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            padding: 20px;
-            opacity: 0;
-            transition: opacity .3s ease;
-        }
-
-        .modal-overlay.active { display: flex; opacity: 1; }
-
-        .modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--terminal-green);
-            border-radius: 16px;
-            padding: 35px 30px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            box-shadow: 0 0 40px rgba(176,176,176,.15), 0 20px 60px rgba(0,0,0,.8);
-            direction: inherit;
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-        
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-        }
-
-        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer !important; transition: .3s; z-index: 10; }
-        .modal-close:hover { color: var(--terminal-green); transform: rotate(90deg); }
-        .modal-icon { font-size: 3rem; color: var(--terminal-green); text-align: center; margin-bottom: 20px; text-shadow: 0 0 20px rgba(176,176,176,.5); }
-        .modal-title { font-size: 1.8rem; font-family: 'Fira Code', monospace; text-align: center; margin-bottom: 15px; color: #fff; direction: ltr; }
-        .modal-desc { color: var(--text-main); line-height: 1.9; margin-bottom: 20px; text-align: center; font-size: .95rem; }
-
-        .modal-tech {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 25px;
-        }
-
-        .modal-tech span {
-            background: rgba(176,176,176,.1);
-            border: 1px solid var(--border-color);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: .8rem;
-            font-family: 'Fira Code', monospace;
-            color: var(--terminal-green);
-        }
-
-        .modal-link {
-            align-items: center;
-            gap: 8px;
-            background: var(--terminal-green);
-            color: var(--bg-dark);
-            padding: 10px 25px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: bold;
-            font-family: 'Fira Code', monospace;
-            transition: .3s;
-            margin: 0 auto;
-            display: table;
-        }
-
-        .modal-link:hover { background: #fff; color: #000; transform: scale(1.05); box-shadow: 0 0 20px rgba(176,176,176,.4); }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070a18">
+  <meta name="description" content="عيد ميلاد سعيد يا عبدالرحمن — رسائل من أصحابك، داخل أظرف وبكل حب.">
+  <title>عيد ميلاد سعيد يا عبدالرحمن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --night: #070a18;
+      --night-soft: #0d1429;
+      --panel: rgba(16, 27, 51, .72);
+      --panel-border: rgba(146, 185, 255, .16);
+      --ice: #eff6ff;
+      --blue: #78aaff;
+      --blue-bright: #a9ccff;
+      --blue-dim: #8293b5;
+      --pink: #ff9eb9;
+      --cream: #f9f2ed;
+      --ink: #202946;
+      --ease: cubic-bezier(.2,.75,.25,1);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ice);
+      background:
+        radial-gradient(ellipse at 80% -12%, rgba(51, 90, 169, .35), transparent 38rem),
+        radial-gradient(ellipse at 8% 40%, rgba(47, 63, 123, .16), transparent 34rem),
+        radial-gradient(ellipse at 78% 91%, rgba(95, 37, 83, .13), transparent 34rem),
+        var(--night);
+      font-family: 'Readex Pro', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      pointer-events: none;
+      content: '';
+      opacity: .16;
+      background-image: radial-gradient(rgba(202, 220, 255, .48) .7px, transparent .7px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    button { font: inherit; }
+    a { color: inherit; }
+    .ambient { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+    .ambient-heart {
+      position: absolute;
+      color: rgba(150, 185, 255, .12);
+      font-family: Georgia, serif;
+      line-height: 1;
+      animation: drift var(--duration, 16s) ease-in-out var(--delay, 0s) infinite alternate;
+      text-shadow: 0 0 30px rgba(107, 151, 255, .18);
+      user-select: none;
+    }
+    @keyframes drift { from { transform: translate3d(0, 16px, 0) rotate(-12deg); } to { transform: translate3d(12px, -24px, 0) rotate(12deg); } }
+
+    .site-shell { width: min(1160px, calc(100% - 48px)); margin-inline: auto; }
+    .topbar { height: 84px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(172, 195, 241, .1); }
+    .brand { display: inline-flex; align-items: center; gap: 11px; color: #e9f1ff; text-decoration: none; font-size: 13px; font-weight: 500; letter-spacing: .02em; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; color: var(--pink); border: 1px solid rgba(255, 158, 185, .34); border-radius: 12px; background: rgba(255, 158, 185, .08); font-size: 17px; box-shadow: 0 0 22px rgba(255, 117, 162, .1); }
+    .top-note { color: #99a7c5; font-size: 12px; display: inline-flex; align-items: center; gap: 9px; }
+    .top-note span:first-child { color: var(--pink); font-size: 14px; }
+
+    .hero { min-height: 610px; padding-block: 62px 66px; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(330px, .9fr); align-items: center; gap: 38px; position: relative; }
+    .hero-copy { position: relative; z-index: 2; padding-block: 18px; }
+    .eyebrow { width: fit-content; display: flex; align-items: center; gap: 10px; padding: 9px 14px; border: 1px solid rgba(151, 186, 255, .2); border-radius: 999px; color: #c1d6fb; background: rgba(90, 127, 206, .08); font-size: 12px; }
+    .eyebrow-mark { color: var(--pink); font-size: 14px; }
+    h1 { margin: 27px 0 0; font-size: clamp(42px, 7vw, 76px); letter-spacing: -.055em; line-height: 1.23; font-weight: 700; }
+    .hero-name { display: inline-block; color: transparent; background: linear-gradient(106deg, #f2f7ff 8%, #b2d0ff 50%, #8caeff 86%); background-clip: text; -webkit-background-clip: text; filter: drop-shadow(0 8px 28px rgba(117, 162, 255, .22)); }
+    .hero-sub { max-width: 510px; margin: 22px 0 0; color: #aebbd5; font-size: clamp(15px, 1.6vw, 18px); line-height: 2; font-weight: 300; }
+    .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 31px; }
+    .primary-button, .quiet-button { min-height: 50px; border-radius: 14px; padding: 0 21px; display: inline-flex; justify-content: center; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; transition: transform .25s var(--ease), border-color .25s, background .25s, box-shadow .25s; }
+    .primary-button { color: #111a30; border: 0; background: linear-gradient(110deg, #dceaff, #91baff); box-shadow: 0 12px 30px rgba(100, 148, 244, .18); font-size: 14px; font-weight: 600; }
+    .primary-button:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(100, 148, 244, .3); }
+    .quiet-button { color: #d5e2fb; border: 1px solid rgba(174, 197, 242, .2); background: rgba(255, 255, 255, .025); font-size: 13px; }
+    .quiet-button:hover { border-color: rgba(174, 197, 242, .45); background: rgba(255, 255, 255, .06); transform: translateY(-2px); }
+    .button-arrow { font-size: 17px; line-height: 1; }
+    .friends-line { display: flex; align-items: center; gap: 13px; margin-top: 34px; color: #8694b2; font-size: 11px; }
+    .mini-avatars { display: flex; direction: ltr; padding-left: 5px; }
+    .mini-avatar { width: 31px; height: 31px; margin-left: -7px; border: 2px solid #0b1021; border-radius: 50%; object-fit: cover; background: #1c2e52; }
+    .friends-caption strong { display: block; margin-bottom: 2px; color: #d8e5fb; font-size: 12px; font-weight: 500; }
+
+    .hero-portrait { min-height: 440px; display: grid; place-items: center; position: relative; isolation: isolate; }
+    .portrait-glow { position: absolute; width: min(440px, 90%); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(83, 126, 219, .23), rgba(91, 107, 181, .08) 42%, transparent 70%); filter: blur(10px); z-index: -1; }
+    .orbit { width: 320px; height: 320px; position: absolute; border: 1px solid rgba(155, 191, 255, .13); border-radius: 50%; animation: orbit 34s linear infinite; }
+    .orbit::before, .orbit::after { position: absolute; content: '✦'; color: #c4d9ff; font-size: 13px; text-shadow: 0 0 14px #82adff; }
+    .orbit::before { top: 42px; right: 27px; }
+    .orbit::after { bottom: 56px; left: 13px; color: var(--pink); }
+    @keyframes orbit { to { transform: rotate(360deg); } }
+    .portrait-frame { width: 240px; aspect-ratio: 1; border-radius: 50%; padding: 9px; position: relative; background: linear-gradient(145deg, rgba(205, 226, 255, .75), rgba(100, 151, 247, .45) 40%, rgba(255, 155, 190, .42)); box-shadow: 0 0 0 1px rgba(189, 215, 255, .26), 0 22px 100px rgba(66, 109, 208, .22), 0 0 70px rgba(113, 154, 255, .15); }
+    .portrait-frame::before { content: ''; position: absolute; inset: -17px; border: 1px solid rgba(188, 211, 255, .12); border-radius: 50%; }
+    .portrait-image { width: 100%; height: 100%; display: block; border-radius: 50%; border: 4px solid #10182e; object-fit: cover; background: #17274a; }
+    .orbit-label { position: absolute; bottom: 53px; right: max(1%, calc(50% - 190px)); display: flex; align-items: center; gap: 10px; padding: 9px 13px 9px 15px; border: 1px solid rgba(166, 195, 255, .2); border-radius: 14px; background: rgba(11, 18, 38, .85); box-shadow: 0 12px 36px rgba(0, 0, 0, .25); backdrop-filter: blur(12px); }
+    .orbit-label .label-heart { color: var(--pink); font-size: 16px; }
+    .orbit-label span:last-child { display: block; color: #aab7d2; font-size: 10px; }
+    .orbit-label strong { display: block; margin-top: 2px; color: #f2f6ff; font-size: 12px; font-weight: 500; }
+    .floating-note { position: absolute; top: 44px; left: max(2%, calc(50% - 185px)); padding: 12px 15px; transform: rotate(-7deg); border: 1px solid rgba(255, 196, 214, .25); border-radius: 13px; background: rgba(36, 22, 42, .64); color: #f7c8d8; font-size: 11px; box-shadow: 0 14px 34px rgba(0, 0, 0, .2); }
+
+    .section-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(158, 186, 239, .2), transparent); }
+    .letters-section { padding: 76px 0 90px; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    .section-kicker { color: var(--pink); font-size: 11px; letter-spacing: .04em; }
+    h2 { margin: 10px 0 0; color: #edf4ff; font-size: clamp(29px, 4vw, 44px); letter-spacing: -.04em; line-height: 1.4; }
+    .section-description { max-width: 340px; margin: 0 0 3px; color: #8999ba; font-size: 13px; line-height: 1.9; }
+    .envelope-count { flex: 0 0 auto; color: #9aabc9; border: 1px solid rgba(155, 186, 246, .17); border-radius: 12px; padding: 9px 12px; font-size: 11px; background: rgba(255,255,255,.025); }
+    .envelope-count strong { color: #dce9ff; font-weight: 600; }
+    .letters-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 18px; }
+    .letter-card { padding: 18px; border: 1px solid var(--panel-border); border-radius: 22px; background: linear-gradient(142deg, rgba(24, 39, 72, .67), rgba(13, 21, 41, .76)); box-shadow: 0 18px 55px rgba(0, 0, 0, .15); transition: transform .32s var(--ease), border-color .32s, box-shadow .32s; }
+    .letter-card:nth-child(2) { margin-top: 23px; }
+    .letter-card:nth-child(3) { margin-top: 46px; }
+    .letter-card:hover { transform: translateY(-4px); border-color: rgba(151, 188, 255, .33); box-shadow: 0 24px 68px rgba(0, 0, 0, .24); }
+    .sender { display: flex; align-items: center; gap: 11px; margin-bottom: 16px; }
+    .sender-avatar { width: 43px; height: 43px; flex: 0 0 auto; object-fit: cover; border-radius: 50%; border: 1px solid rgba(178, 204, 255, .32); box-shadow: 0 0 0 4px rgba(133, 170, 242, .07); background: #1a2b4d; }
+    .sender-name { color: #f0f5ff; font-size: 13px; font-weight: 600; }
+    .sender-role { margin-top: 4px; color: #8294b7; font-size: 10px; }
+    .letter-icon { margin-right: auto; color: #88aef2; font-size: 15px; opacity: .8; }
+
+    .envelope-button { width: 100%; height: 199px; display: block; position: relative; overflow: hidden; padding: 0; border: 1px solid rgba(166, 199, 255, .36); border-radius: 14px; cursor: pointer; background: linear-gradient(142deg, #718fca, #344f86 55%, #263d6c); text-align: right; perspective: 700px; box-shadow: inset 0 1px 0 rgba(255,255,255,.17), 0 10px 24px rgba(4, 8, 21, .27); transition: height .42s var(--ease), box-shadow .28s, border-color .28s; }
+    .envelope-button::before { position: absolute; z-index: 0; inset: 0; content: ''; opacity: .36; background: linear-gradient(32deg, transparent 49.6%, rgba(210, 226, 255, .6) 50%, transparent 50.5%), linear-gradient(148deg, transparent 49.6%, rgba(210, 226, 255, .42) 50%, transparent 50.5%); }
+    .envelope-button:hover { border-color: rgba(205, 224, 255, .7); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 13px 28px rgba(4, 8, 21, .35); }
+    .letter-paper { position: absolute; z-index: 1; top: 8px; right: 10px; left: 10px; min-height: 164px; padding: 15px 15px 47px; overflow: hidden; border-radius: 9px; color: var(--ink); background: linear-gradient(155deg, #fffaf6, #e9effb); box-shadow: 0 4px 12px rgba(2, 9, 28, .13); transform: translateY(35px); transition: transform .47s var(--ease), top .4s var(--ease), bottom .4s var(--ease), min-height .4s var(--ease); }
+    .letter-paper::before { position: absolute; top: 10px; left: 12px; content: '✦'; color: rgba(97, 122, 173, .3); font-size: 12px; }
+    .paper-label { display: inline-block; margin-bottom: 9px; color: #7284a8; font-size: 9px; }
+    .paper-preview, .paper-full { display: block; color: #33405d; font-size: 11px; line-height: 1.9; }
+    .paper-preview { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .paper-full { display: none; padding-bottom: 4px; white-space: normal; }
+    .envelope-front { position: absolute; z-index: 2; right: 0; bottom: 0; left: 0; height: 61%; background: linear-gradient(146deg, #49689f, #2b426f 78%); clip-path: polygon(0 0, 50% 70%, 100% 0, 100% 100%, 0 100%); transition: transform .45s var(--ease), opacity .25s; }
+    .envelope-front::after { position: absolute; inset: 0; content: ''; background: linear-gradient(33deg, transparent 49.5%, rgba(215, 229, 255, .3) 50%, transparent 50.7%), linear-gradient(147deg, transparent 49.5%, rgba(215, 229, 255, .25) 50%, transparent 50.7%); }
+    .envelope-to { position: absolute; z-index: 3; right: 15px; bottom: 13px; color: rgba(233, 241, 255, .79); font-size: 9px; letter-spacing: .03em; }
+    .heart-seal { width: 39px; height: 39px; display: grid; place-items: center; position: absolute; z-index: 4; bottom: 23px; left: calc(50% - 19px); color: #fff1f5; border: 1px solid rgba(255, 214, 227, .74); border-radius: 50%; background: linear-gradient(140deg, #ee8fae, #c65f89); box-shadow: 0 5px 18px rgba(13, 16, 39, .38), inset 0 1px 3px rgba(255,255,255,.35); font-size: 17px; transition: transform .42s var(--ease), opacity .25s; }
+    .open-hint { display: flex; justify-content: center; align-items: center; gap: 7px; margin-top: 12px; color: #91a3c5; font-size: 10px; }
+    .open-hint span { color: var(--pink); }
+    .letter-card.is-open { border-color: rgba(255, 158, 185, .29); }
+    .letter-card.is-open .envelope-button { height: 286px; cursor: default; background: linear-gradient(145deg, #607fb8, #314c80); }
+    .letter-card.is-open .letter-paper { top: 9px; bottom: 9px; min-height: 0; padding: 18px 16px 22px; overflow-y: auto; transform: translateY(0); }
+    .letter-card.is-open .paper-preview { display: none; }
+    .letter-card.is-open .paper-full { display: block; animation: note-appear .35s .08s both; }
+    .letter-card.is-open .envelope-front { transform: translateY(104%); opacity: .15; }
+    .letter-card.is-open .envelope-to { opacity: .2; }
+    .letter-card.is-open .heart-seal { transform: translateY(102px) scale(.78) rotate(-12deg); opacity: .7; }
+    .letter-card.is-open .open-hint { color: #d9c1cd; }
+    @keyframes note-appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .closing { position: relative; margin: 8px auto 78px; padding: 35px clamp(22px, 5vw, 58px); overflow: hidden; border: 1px solid rgba(165, 194, 249, .17); border-radius: 22px; background: linear-gradient(112deg, rgba(23, 34, 63, .72), rgba(24, 26, 49, .7)); text-align: center; }
+    .closing::before, .closing::after { position: absolute; content: '♡'; color: rgba(163, 192, 255, .12); font-size: 104px; line-height: 1; }
+    .closing::before { top: -38px; right: 5%; transform: rotate(-16deg); }
+    .closing::after { bottom: -52px; left: 7%; transform: rotate(17deg); }
+    .closing-symbol { color: var(--pink); font-size: 18px; }
+    .closing p { max-width: 580px; margin: 11px auto 0; color: #c3cde1; font-size: 14px; line-height: 2; }
+    .closing strong { color: #fff; font-weight: 600; }
+    footer { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border-top: 1px solid rgba(172, 195, 241, .1); color: #7383a1; font-size: 10px; }
+    .footer-heart { color: var(--pink); padding-inline: 4px; }
+
+    .music-dock { position: fixed; z-index: 20; left: max(20px, env(safe-area-inset-left)); bottom: max(20px, env(safe-area-inset-bottom)); }
+    .music-trigger { min-height: 52px; display: inline-flex; align-items: center; gap: 11px; padding: 0 17px 0 15px; border: 1px solid rgba(164, 196, 255, .26); border-radius: 16px; background: rgba(12, 20, 41, .88); color: #e9f2ff; box-shadow: 0 12px 30px rgba(0, 0, 0, .33), 0 0 27px rgba(89, 135, 229, .1); backdrop-filter: blur(18px); cursor: pointer; transition: transform .25s var(--ease), border-color .25s, box-shadow .3s; }
+    .music-trigger:hover { transform: translateY(-2px); border-color: rgba(175, 205, 255, .52); }
+    .music-dock.is-playing .music-trigger { border-color: rgba(255, 158, 185, .5); box-shadow: 0 12px 30px rgba(0, 0, 0, .33), 0 0 32px rgba(255, 117, 162, .22); }
+    .music-disc { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #182342; background: linear-gradient(145deg, #dceaff, #89aff2); font-size: 14px; position: relative; flex: 0 0 auto; }
+    .music-dock.is-playing .music-disc { background: linear-gradient(145deg, #ffd5e2, #ff9eb9); color: #4a1a2c; }
+    .music-dock.is-playing .music-disc::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid rgba(255, 158, 185, .6); animation: pulse-ring 2s ease-out infinite; }
+    @keyframes pulse-ring { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.45); opacity: 0; } }
+    .music-disc .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+    .music-disc .eq i { display: block; width: 2px; height: 30%; background: currentColor; border-radius: 1px; transition: height .2s; }
+    .music-dock.is-playing .music-disc .eq i { animation: eq-bounce .9s ease-in-out infinite; }
+    .music-dock.is-playing .music-disc .eq i:nth-child(1) { animation-delay: 0s; }
+    .music-dock.is-playing .music-disc .eq i:nth-child(2) { animation-delay: .15s; }
+    .music-dock.is-playing .music-disc .eq i:nth-child(3) { animation-delay: .3s; }
+    .music-dock.is-playing .music-disc .eq i:nth-child(4) { animation-delay: .45s; }
+    @keyframes eq-bounce { 0%, 100% { height: 25%; } 50% { height: 100%; } }
+    .music-label { font-size: 10px; color: #b8c8e4; text-align: right; }
+    .music-label strong { display: block; margin-bottom: 2px; color: #f2f6ff; font-size: 11px; font-weight: 500; }
+
+    .heart-pop { position: fixed; z-index: 30; pointer-events: none; color: var(--pink); text-shadow: 0 0 18px rgba(255, 135, 174, .5); animation: pop-away 1.65s ease-out forwards; }
+    @keyframes pop-away { 0% { opacity: 0; transform: translate(-50%, 5px) scale(.45) rotate(-12deg); } 18% { opacity: .95; } 100% { opacity: 0; transform: translate(calc(-50% + var(--drift)), -125px) scale(1.1) rotate(18deg); } }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 800px) {
+      .hero { min-height: auto; padding-block: 48px 57px; grid-template-columns: minmax(0, 1fr) minmax(250px, .82fr); gap: 18px; }
+      .hero-portrait { min-height: 365px; }
+      .portrait-frame { width: 205px; }
+      .orbit { width: 278px; height: 278px; }
+      .letters-section { padding-top: 60px; }
+      .letters-list { grid-template-columns: 1fr; gap: 15px; max-width: 570px; margin-inline: auto; }
+      .letter-card:nth-child(2), .letter-card:nth-child(3) { margin-top: 0; }
+      .letter-card { padding: 18px; }
+      .envelope-button { height: 185px; }
+      .letter-card.is-open .envelope-button { height: 275px; }
+    }
+
+    @media (max-width: 600px) {
+      .site-shell { width: min(100% - 34px, 520px); }
+      .topbar { height: 68px; }
+      .brand { gap: 8px; font-size: 11px; }
+      .brand-mark { width: 31px; height: 31px; border-radius: 11px; }
+      .top-note { font-size: 10px; }
+      .hero { display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding-block: 22px 45px; }
+      .hero-portrait { order: -1; min-height: 290px; margin-bottom: 2px; }
+      .portrait-frame { width: 170px; padding: 7px; }
+      .portrait-frame::before { inset: -12px; }
+      .orbit { width: 232px; height: 232px; }
+      .floating-note { top: 27px; left: 4%; font-size: 9px; }
+      .orbit-label { bottom: 18px; right: 4%; padding: 7px 10px; }
+      .hero-copy { padding-block: 0; }
+      .eyebrow { font-size: 10px; padding: 8px 11px; }
+      h1 { margin-top: 20px; font-size: clamp(39px, 11.4vw, 59px); }
+      .hero-sub { margin-top: 13px; font-size: 14px; line-height: 1.9; }
+      .hero-actions { margin-top: 22px; gap: 9px; }
+      .primary-button, .quiet-button { min-height: 46px; padding-inline: 15px; border-radius: 13px; font-size: 12px; }
+      .friends-line { margin-top: 25px; }
+      .letters-section { padding: 49px 0 64px; }
+      .section-heading { display: block; margin-bottom: 22px; }
+      h2 { font-size: 31px; }
+      .section-description { margin-top: 8px; font-size: 12px; }
+      .envelope-count { display: inline-block; margin-top: 13px; }
+      .letter-card { padding: 15px; border-radius: 19px; }
+      .sender { margin-bottom: 13px; }
+      .closing { margin-bottom: 62px; padding: 29px 20px; }
+      .closing p { font-size: 12px; }
+      footer { min-height: 68px; font-size: 9px; }
+      .music-trigger { min-height: 46px; padding-inline: 13px 15px; border-radius: 15px; }
+      .music-disc { width: 25px; height: 25px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
 </head>
 <body>
+  <div class="ambient" id="ambient" aria-hidden="true"></div>
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="بداية الصفحة">
+        <span class="brand-mark" aria-hidden="true">♡</span>
+        <span>رسالة من القلب</span>
+      </a>
+    </header>
 
-    <div class="cursor-glow"></div>
-    <input type="text" id="honeypot" style="display:none;" tabindex="-1" autocomplete="off">
-
-    <nav id="navbar">
-        <a href="#home" class="nav-brand"><i class="fa-solid fa-code"></i> ShadowBound</a>
-
-        <div class="nav-content-wrapper">
-            <div class="nav-links" id="navLinks">
-                <a href="#home" class="active-link"><i class="fa-solid fa-house"></i> Home</a>
-                <a href="#about"><i class="fa-solid fa-user"></i> About</a>
-                <a href="#projects"><i class="fa-solid fa-diagram-project"></i> Projects</a>
-                <a href="#social"><i class="fa-solid fa-share-nodes"></i> Socials</a>
-                <button class="lang-btn mobile-lang-btn" id="langToggleMobile">EN</button>
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-mark" aria-hidden="true">✦</span><span>اليوم يوم شخصٍ غالي</span></div>
+          <h1 id="hero-title">عيد ميلاد سعيد<br><span class="hero-name">يا عبدالرحمن</span></h1>
+          <p class="hero-sub">لأن بعض الناس وجودهم لحاله هدية… جهّزنا لك كم كلمة من القلب، مغلّفة بمحبة أصحابك.</p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#letters"><span>افتح رسائلك</span><span class="button-arrow" aria-hidden="true">←</span></a>
+            <button class="quiet-button" id="musicCta" type="button"><span aria-hidden="true">♫</span><span>شغّل أغنيتك</span></button>
+          </div>
+          <div class="friends-line">
+            <div class="mini-avatars" aria-label="أصحاب عبدالرحمن">
+              <img class="mini-avatar" src="https://cdn.discordapp.com/avatars/1356618809078841458/0f63dbb471d7a9e7907aeb326cf2c204.webp?size=128" alt="زياد" loading="eager">
+              <img class="mini-avatar" src="https://cdn.discordapp.com/avatars/1422337675871916174/727ee2e23cd98d640881ceca7cf55eed.webp?size=128" alt="بدر" loading="eager">
+              <img class="mini-avatar" src="https://cdn.discordapp.com/avatars/1212190687659819041/cae6a777360f23e26f5fccc8c9f491a6.webp?size=128" alt="خالد" loading="eager">
             </div>
-
-            <div class="nav-actions">
-                <button class="lang-btn desktop-lang-btn" id="langToggleDesktop">EN</button>
-                <button class="menu-btn" id="menuBtn"><i class="fa-solid fa-bars"></i></button>
-            </div>
+            <div class="friends-caption"><strong>من أصحابك، بكل حب</strong><span>ثلاث رسائل… وكلّها لك</span></div>
+          </div>
         </div>
-    </nav>
 
-    <div class="container">
-
-        <section id="home" class="hero">
-            <div class="hero-text">
-                <div class="terminal">
-                    <div class="terminal-header">
-                        <div class="terminal-dots">
-                            <span class="dot-red"></span>
-                            <span class="dot-yellow"></span>
-                            <span class="dot-green"></span>
-                        </div>
-                        <div class="terminal-time" id="terminal-clock">--:--:-- --</div>
-                    </div>
-                    <p class="terminal-static">> root@ShadowBound:~# ./startmvtem.sh</p>
-                    <p id="animated-log"></p>
-                    <p id="dynamic-log"></p>
-                </div>
-
-                <div class="activity-card" id="activityCard">
-                    <div class="activity-header">
-                        <div class="activity-status">
-                            <span class="activity-dot" id="activityDot" data-s="offline"></span>
-                            <span id="activityStatusText">--</span>
-                        </div>
-                        <span class="activity-custom" id="activityCustom"></span>
-                    </div>
-                    <div class="activity-list" id="activityList"></div>
-                </div>
-            </div>
-
-            <div class="hero-image">
-                <img id="discordAvatar" alt="ShadowBound" decoding="async">
-                <div class="tech-badge" title="AI + Coding + Cybersecurity">
-                    <i class="fa-solid fa-microchip"></i>
-                    <i class="fa-solid fa-code"></i>
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-            </div>
-        </section>
-
-        <section id="about">
-            <div class="section-header">About Me</div>
-
-            <div class="about-box">
-                <p class="about-lead"
-                   data-ar="أنا زياد طالب هندسة ذكاء اصطناعي ومطور. ما أحب الكلام النظري كثير، أحب أبني وأطلق مشاريعي بنفسي. أشتغل على مواقع الويب، بوتات ديسكورد، أدوات OSINT، وتطبيقات ذكاء اصطناعي الناس تستخدمها فعلاً."
-                   data-en="I'm Ziyad, an AI engineering student and developer. I don't just stick to theory. I build and ship my own projects like websites, Discord bots, OSINT tools, and AI apps that real people actually use.">
-                    أنا زياد طالب هندسة ذكاء اصطناعي ومطور. ما أحب الكلام النظري كثير، أحب أبني وأطلق مشاريعي بنفسي. أشتغل على مواقع الويب، بوتات ديسكورد، أدوات OSINT، وتطبيقات ذكاء اصطناعي الناس تستخدمها فعلاً.
-                </p>
-
-                <div class="about-focus-grid">
-                    <div class="focus-card">
-                        <i class="fa-solid fa-laptop-code"></i>
-                        <h4>Web Development</h4>
-                        <p data-ar="أبني مواقع نظيفة وسريعة بتجربة استخدام مريحة."
-                           data-en="I build clean and fast websites with a comfortable user experience.">أبني مواقع نظيفة وسريعة بتجربة استخدام مريحة.</p>
-                    </div>
-                    <div class="focus-card">
-                        <i class="fa-solid fa-robot"></i>
-                        <h4>Discord Bots</h4>
-                        <p data-ar="بوتات إدارة وحماية مع أتمتة للمهام المتكررة لتوفير الوقت."
-                           data-en="Moderation and protection bots with automation for repetitive tasks to save time.">بوتات إدارة وحماية مع أتمتة للمهام المتكررة لتوفير الوقت.</p>
-                    </div>
-                    <div class="focus-card">
-                        <i class="fa-solid fa-user-secret"></i>
-                        <h4>OSINT & Security</h4>
-                        <p data-ar="جمع المعلومات من المصادر المفتوحة وتحليل النطاقات وبناء أدوات استطلاع أخلاقية."
-                           data-en="Gathering info from open sources, analyzing domains, and building ethical recon tools.">جمع المعلومات من المصادر المفتوحة وتحليل النطاقات وبناء أدوات استطلاع أخلاقية.</p>
-                    </div>
-                    <div class="focus-card">
-                        <i class="fa-solid fa-brain"></i>
-                        <h4>AI & Training</h4>
-                        <p data-ar="تدريب النماذج على بيانات مخصصة وتحسين أدائها وبناء مساعدين أذكياء."
-                           data-en="Training models on custom data, optimizing performance, and building smart assistants.">تدريب النماذج على بيانات مخصصة وتحسين أدائها وبناء مساعدين أذكياء.</p>
-                    </div>
-                </div>
-
-                <div class="about-skills-block">
-                    <h4>Technologies I Work With</h4>
-                    <div class="skill-chips">
-                        <span class="skill-chip">JavaScript</span>
-                        <span class="skill-chip">Node.js</span>
-                        <span class="skill-chip">Discord.js</span>
-                        <span class="skill-chip">Python</span>
-                        <span class="skill-chip">HTML</span>
-                        <span class="skill-chip">CSS</span>
-                        <span class="skill-chip">C</span>
-                        <span class="skill-chip">C++</span>
-                        <span class="skill-chip">Linux</span>
-                        <span class="skill-chip">Git</span>
-                        <span class="skill-chip">PyTorch</span>
-                        <span class="skill-chip">APIs</span>
-                    </div>
-                </div>
-
-                <p class="about-paragraph"
-                   data-ar="بعيداً عن الأدوات، أشتغل على أبحاث OSINT، وأدرب نماذج ذكاء اصطناعي على بيانات مخصصة، وأتمت المهام المتكررة عشان تشتغل لحالها. كل مشروع أبدأه يكون من مشكلة حقيقية وينتهي بأداة الناس تستخدمها فعلاً."
-                   data-en="Beyond tools, I work on OSINT research, train AI models on custom data, and automate repetitive tasks to run autonomously. Every project I start begins with a real problem and ends with a tool people actually use.">
-                    بعيداً عن الأدوات، أشتغل على أبحاث OSINT، وأدرب نماذج ذكاء اصطناعي على بيانات مخصصة، وأتمت المهام المتكررة عشان تشتغل لحالها. كل مشروع أبدأه يكون من مشكلة حقيقية وينتهي بأداة الناس تستخدمها فعلاً.
-                </p>
-
-                <p class="about-closing"
-                   data-ar="اشتغلت مع عملاء حقيقيين وسلمت مشاريع كاملة، وما زلت أطلق شي جديد باستمرار."
-                   data-en="I've worked with real clients and delivered complete projects, and I keep launching new things constantly.">
-                    اشتغلت مع عملاء حقيقيين وسلمت مشاريع كاملة، وما زلت أطلق شي جديد باستمرار.
-                </p>
-
-                <div class="author-signature">
-                    <i class="fa-solid fa-code"></i>
-                    <i class="fa-solid fa-microchip"></i>
-                    ShadowBound
-                </div>
-            </div>
-        </section>
-
-        <section id="projects">
-            <div class="section-header">Projects</div>
-
-            <div class="projects-grid">
-
-                <article class="project-card" data-status="beta"
-                    data-title-en="Neural Assistant"
-                    data-desc-ar="مساعد ذكاء اصطناعي محلي مبني على نماذج مدربة ببيانات مخصصة."
-                    data-desc-en="A local AI assistant powered by models trained on custom data."
-                    data-details-ar="مساعد ذكاء اصطناعي يعمل محلياً على نماذج دربت وحسنت ببيانات مخصصة. يوفر إجابات دقيقة وواجهة API نظيفة للتكامل مع أي نظام خارجي."
-                    data-details-en="A locally hosted AI assistant running on models trained and fine-tuned with custom data. It delivers accurate answers and a clean API interface for integration with any external system."
-                    data-tech="Python, PyTorch, Transformers, FastAPI"
-                    data-link=""
-                    data-icon="fa-brain">
-                    <div class="project-icon"><i class="fa-solid fa-brain"></i></div>
-                    <h3 class="project-title">Neural Assistant</h3>
-                    <p class="project-desc" data-ar="مساعد ذكاء اصطناعي محلي مبني على نماذج مدربة ببيانات مخصصة." data-en="A local AI assistant powered by models trained on custom data.">مساعد ذكاء اصطناعي محلي مبني على نماذج مدربة ببيانات مخصصة.</p>
-                </article>
-
-                <article class="project-card" data-status="dev"
-                    data-title-en="OSINT Recon"
-                    data-desc-ar="أدوات OSINT لجمع وتحليل المعلومات في تقرير موحد."
-                    data-desc-en="OSINT tools for gathering and analyzing information in one unified report."
-                    data-details-ar="منصة استطلاع أخلاقي تجمع تعداد الحسابات عبر المنصات وفحص النطاقات وسجلات DNS واستخراج البيانات الوصفية من الملفات ثم تنظيم النتائج في تقرير موحد جاهز للتحليل."
-                    data-details-en="An ethical reconnaissance platform that combines username enumeration across platforms, domain and DNS recon, and metadata extraction from files, then organizes the findings into a unified, analysis-ready report."
-                    data-tech="Python, AsyncIO, HTTPX, APIs"
-                    data-link=""
-                    data-icon="fa-user-secret">
-                    <div class="project-icon"><i class="fa-solid fa-user-secret"></i></div>
-                    <h3 class="project-title">OSINT Recon</h3>
-                    <p class="project-desc" data-ar="أدوات OSINT لجمع وتحليل المعلومات في تقرير موحد." data-en="OSINT tools for gathering and analyzing information in one unified report.">أدوات OSINT لجمع وتحليل المعلومات في تقرير موحد.</p>
-                </article>
-
-                <article class="project-card" data-status="dev"
-                    data-title-en="Ash Avatar"
-                    data-desc-ar="منصة لاكتشاف الأفتارات بتصنيف ذكي وبحث سريع."
-                    data-desc-en="An avatar discovery platform with smart categorization and fast search."
-                    data-details-ar="منصة لاكتشاف الأفتارات مع تصنيف ذكي وبحث سريع تهدف لاختصار وقت البحث ومساعدة المستخدم في إيجاد ما يناسب ذوقه. المشروع قيد التطوير."
-                    data-details-en="An avatar discovery platform with smart categorization and fast search, designed to save time and help users find what suits their taste. Currently in development."
-                    data-tech="HTML, CSS, JavaScript"
-                    data-link=""
-                    data-icon="fa-images">
-                    <div class="project-icon"><i class="fa-solid fa-images"></i></div>
-                    <h3 class="project-title">Ash Avatar</h3>
-                    <p class="project-desc" data-ar="منصة لاكتشاف الأفتارات بتصنيف ذكي وبحث سريع." data-en="An avatar discovery platform with smart categorization and fast search.">منصة لاكتشاف الأفتارات بتصنيف ذكي وبحث سريع.</p>
-                </article>
-
-                <article class="project-card" data-status="live"
-                    data-title-en="Server Protection Bot"
-                    data-desc-ar="حماية لحظية للسيرفر مع كشف تلقائي للأنشطة المشبوهة."
-                    data-desc-en="Real-time server protection with automatic detection of suspicious activity."
-                    data-details-ar="بوت حماية يراقب نشاط السيرفر لحظياً ويكتشف الأنشطة المشبوهة والإجراءات الإدارية الضارة مع تنبيهات فورية للمشرفين وحد تلقائي للسبام."
-                    data-details-en="A protection bot that monitors server activity in real time and detects suspicious activity and harmful moderation actions, with instant mod alerts and automatic spam mitigation."
-                    data-tech="JavaScript, Node.js, Discord.js"
-                    data-link=""
-                    data-icon="fa-shield-halved">
-                    <div class="project-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                    <h3 class="project-title">Server Protection Bot</h3>
-                    <p class="project-desc" data-ar="حماية لحظية للسيرفر مع كشف تلقائي للأنشطة المشبوهة." data-en="Real-time server protection with automatic detection of suspicious activity.">حماية لحظية للسيرفر مع كشف تلقائي للأنشطة المشبوهة.</p>
-                </article>
-
-                <article class="project-card" data-status="live"
-                    data-title-en="Server Management Bot"
-                    data-desc-ar="أدوات إدارة كاملة مع سجلات لحظية ونظام أذونات مرن."
-                    data-desc-en="Complete management tools with live logs and a flexible permission system."
-                    data-details-ar="بوت إدارة متكامل يشمل الحظر والطرد والكتم والتايم أوت مع سجلات لحظية لكل إجراء ونظام أذونات مرن قابل للتخصيص لكل سيرفر."
-                    data-details-en="A complete management bot with ban, kick, mute, and timeout commands, along with live logs for every action and a flexible permission system customizable for each server."
-                    data-tech="JavaScript, Node.js, Discord.js"
-                    data-link=""
-                    data-icon="fa-gavel">
-                    <div class="project-icon"><i class="fa-solid fa-gavel"></i></div>
-                    <h3 class="project-title">Server Management Bot</h3>
-                    <p class="project-desc" data-ar="أدوات إدارة كاملة مع سجلات لحظية ونظام أذونات مرن." data-en="Complete management tools with live logs and a flexible permission system.">أدوات إدارة كاملة مع سجلات لحظية ونظام أذونات مرن.</p>
-                </article>
-
-                <article class="project-card" data-status="live"
-                    data-title-en="Music Bot"
-                    data-desc-ar="تشغيل صوتي عالي الجودة مع فلاترات وتحكم كامل بالقائمة."
-                    data-desc-en="High-quality audio playback with filters and full queue control."
-                    data-details-ar="بوت موسيقى يوفر تشغيلاً صوتياً عالي الجودة مع فلاترات متعددة مثل الباس و 8D والإيكو وتحكم كامل بقائمة التشغيل والطابور المشترك بين الأعضاء."
-                    data-details-en="A music bot offering high-quality audio playback with multiple filters like bass, 8D, and echo and full control over the playlist and shared queue among members."
-                    data-tech="JavaScript, Node.js, Discord.js"
-                    data-link=""
-                    data-icon="fa-music">
-                    <div class="project-icon"><i class="fa-solid fa-music"></i></div>
-                    <h3 class="project-title">Music Bot</h3>
-                    <p class="project-desc" data-ar="تشغيل صوتي عالي الجودة مع فلاترات وتحكم كامل بالقائمة." data-en="High-quality audio playback with filters and full queue control.">تشغيل صوتي عالي الجودة مع فلاترات وتحكم كامل بالقائمة.</p>
-                </article>
-
-                <article class="project-card" data-status="live"
-                    data-title-en="Tellonym Bot"
-                    data-desc-ar="عرض بروفايل Tellonym كامل داخل ديسكورد بتحديث تلقائي."
-                    data-desc-en="Full Tellonym profile inside Discord with automatic updates."
-                    data-details-ar="بوت يسحب بيانات حساب Tellonym ويعرضها في إمبد تفاعلي يشمل الصورة الشخصية وعدد المتابعين وآخر الرسائل والأكثر تفاعلاً مع تحديث تلقائي للبيانات."
-                    data-details-en="A bot that pulls Tellonym profile data and displays it in an interactive embed including the profile picture, follower count, latest messages, and the most interacted one, with automatic data updates."
-                    data-tech="JavaScript, Node.js, Discord.js"
-                    data-link=""
-                    data-icon="fa-comment-dots">
-                    <div class="project-icon"><i class="fa-solid fa-comment-dots"></i></div>
-                    <h3 class="project-title">Tellonym Bot</h3>
-                    <p class="project-desc" data-ar="عرض بروفايل Tellonym كامل داخل ديسكورد بتحديث تلقائي." data-en="Full Tellonym profile inside Discord with automatic updates.">عرض بروفايل Tellonym كامل داخل ديسكورد بتحديث تلقائي.</p>
-                </article>
-
-                <article class="project-card" data-status="live"
-                    data-title-en="Avatar Bot"
-                    data-desc-ar="معاينة وتنزيل الأفتارات والبنرات بضغطة واحدة."
-                    data-desc-en="Preview and download avatars and banners in one click."
-                    data-details-ar="بوت يتيح معاينة الأفتارات قبل الاستخدام وتنزيل صور الحسابات والبنرات بجودة عالية دون الحاجة لمغادرة السيرفر."
-                    data-details-en="A bot that allows previewing avatars before use and downloading profile pictures and banners in high quality, without leaving the server."
-                    data-tech="JavaScript, Node.js, Discord.js"
-                    data-link=""
-                    data-icon="fa-circle-user">
-                    <div class="project-icon"><i class="fa-solid fa-circle-user"></i></div>
-                    <h3 class="project-title">Avatar Bot</h3>
-                    <p class="project-desc" data-ar="معاينة وتنزيل الأفتارات والبنرات بضغطة واحدة." data-en="Preview and download avatars and banners in one click.">معاينة وتنزيل الأفتارات والبنرات بضغطة واحدة.</p>
-                </article>
-
-                <article class="project-card" data-status="live"
-                    data-title-en="Adhkar Bot"
-                    data-desc-ar="أذكار وتذكيرات صلاة تلقائية مع تخصيص كامل للأوقات."
-                    data-desc-en="Automatic adhkar and prayer reminders with full time customization."
-                    data-details-ar="بوت يرسل الأذكار وتذكيرات الصلاة والدعاء بشكل تلقائي ويدعم سيرفرات متعددة ويتيح تخصيص أوقات الإشعارات بحسب كل سيرفر."
-                    data-details-en="A bot that automatically sends adhkar and prayer/supplication reminders, supports multiple servers, and allows customizing notification times per server."
-                    data-tech="JavaScript, Node.js, Discord.js"
-                    data-link=""
-                    data-icon="fa-hands-praying">
-                    <div class="project-icon"><i class="fa-solid fa-hands-praying"></i></div>
-                    <h3 class="project-title">Adhkar Bot</h3>
-                    <p class="project-desc" data-ar="أذكار وتذكيرات صلاة تلقائية مع تخصيص كامل للأوقات." data-en="Automatic adhkar and prayer reminders with full time customization.">أذكار وتذكيرات صلاة تلقائية مع تخصيص كامل للأوقات.</p>
-                </article>
-
-            </div>
-        </section>
-
-        <section id="social">
-            <div class="section-header">Socials</div>
-
-            <div class="social-grid">
-                <a href="https://discord.com/users/320399668301266954" target="_blank" class="social-card">
-                    <i class="fa-brands fa-discord social-icon"></i>
-                    <span>ShadowBound</span>
-                </a>
-
-                <a href="https://www.instagram.com/0qyl" target="_blank" class="social-card">
-                    <i class="fa-brands fa-instagram social-icon"></i>
-                    <span>0qyl</span>
-                </a>
-
-                <a href="https://tellonym.me/mv" target="_blank" class="social-card">
-                    <i class="fa-solid fa-comment-dots social-icon"></i>
-                    <span>mv</span>
-                </a>
-            </div>
-        </section>
-
-    </div>
-
-    <footer>
-        <p class="footer-terminal">sys.admin@ShadowBound:~$ connection_established --latency=<span id="ping-latency" class="latency-text">12ms</span></p>
-        <p>© 2026 | by ShadowBound</p>
-    </footer>
-
-    <div class="modal-overlay" id="projectModal">
-        <div class="modal-content">
-            <button class="modal-close" id="modalClose"><i class="fa-solid fa-times"></i></button>
-            <div class="modal-icon" id="modalIcon"><i class="fa-solid fa-code"></i></div>
-            <h2 class="modal-title" id="modalTitle"></h2>
-            <p class="modal-desc" id="modalDesc"></p>
-            <div class="modal-tech" id="modalTech"></div>
-            <a href="#" class="modal-link" id="modalLink" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i> GitHub</a>
+        <div class="hero-portrait" aria-label="أفتار عبدالرحمن">
+          <div class="portrait-glow" aria-hidden="true"></div>
+          <div class="orbit" aria-hidden="true"></div>
+          <div class="floating-note" aria-hidden="true">تستاهل الفرح كله ♡</div>
+          <div class="portrait-frame">
+            <img class="portrait-image" src="https://cdn.discordapp.com/avatars/1139473872417210512/6dd35871f99f77e29b5e5ff07ca06678.webp?size=1024" alt="أفتار عبدالرحمن" fetchpriority="high">
+          </div>
+          <div class="orbit-label"><span class="label-heart" aria-hidden="true">♥</span><span><span>صاحب المناسبة</span><strong>عبدالرحمن</strong></span></div>
         </div>
-    </div>
+      </section>
 
-    <script>
-        const DISCORD_USER_ID = "320399668301266954";
-        const AVATAR_CACHE_KEY = 'ShadowBound_discord_avatar_v1';
-        const DEFAULT_AVATAR = 'https://cdn.discordapp.com/embed/avatars/0.png';
-        const avatarImg = document.getElementById('discordAvatar');
+      <div class="section-rule" aria-hidden="true"></div>
 
-        avatarImg.addEventListener('load', () => avatarImg.classList.add('loaded'));
+      <section class="letters-section" id="letters" aria-labelledby="letters-title">
+        <div class="section-heading">
+          <div>
+            <div class="section-kicker">مكتوبة لك أنت ♡</div>
+            <h2 id="letters-title">أظرف وصلت لك</h2>
+            <p class="section-description">كل ظرف وراه كلمة من واحد يحبك. اضغط على القلب وافتحها وحدة وحدة.</p>
+          </div>
+          <div class="envelope-count" aria-live="polite"><strong id="opened-count">٠</strong> من ٣ انفتحت</div>
+        </div>
+        <div class="letters-list" id="letters-list"></div>
+      </section>
 
-        async function refreshAvatar() {
-            try {
-                const res = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_USER_ID}`, { cache: 'no-store' });
-                const json = await res.json();
-                if (!json.success || !json.data || !json.data.discord_user) throw new Error('no data');
+      <section class="closing" aria-label="تهنئة أخيرة">
+        <span class="closing-symbol" aria-hidden="true">♡</span>
+        <p><strong>كل عام وأنت بخير يا عبدالرحمن.</strong><br>عسى سنتك الجديدة تشبه قلبك: طيبة، خفيفة، ومليانة أشياء تفرحك.</p>
+      </section>
+    </main>
 
-                const user = json.data.discord_user;
-                let newUrl;
+  </div>
 
-                if (!user.avatar) {
-                    newUrl = DEFAULT_AVATAR;
-                } else {
-                    const ext = user.avatar.startsWith('a_') ? 'gif' : 'png';
-                    newUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${ext}?size=512`;
-                }
+  <aside class="music-dock" id="music-dock">
+    <button class="music-trigger" id="music-trigger" type="button" aria-label="تشغيل الأغنية">
+      <span class="music-disc" id="music-disc" aria-hidden="true">
+        <span class="eq"><i></i><i></i><i></i><i></i></span>
+      </span>
+      <span class="music-label"><strong id="music-title">أغنيتك الخاصة</strong><span id="music-status">اضغط للتشغيل</span></span>
+    </button>
+  </aside>
 
-                const cached = localStorage.getItem(AVATAR_CACHE_KEY);
-                if (cached !== newUrl) {
-                    localStorage.setItem(AVATAR_CACHE_KEY, newUrl);
-                    avatarImg.src = newUrl;
-                } else if (!avatarImg.src || avatarImg.src !== newUrl) {
-                    avatarImg.src = newUrl;
-                }
-            } catch (e) {
-                if (!avatarImg.src || avatarImg.src === window.location.href) {
-                    avatarImg.src = DEFAULT_AVATAR;
-                }
-            }
-        }
+  <audio id="birthday-audio" src="birthday.mp3" preload="auto" loop></audio>
 
-        (function() {
-            const cached = localStorage.getItem(AVATAR_CACHE_KEY);
-            if (cached) avatarImg.src = cached;
-        })();
+  <script>
+    const senders = [
+      {
+        name: 'l4',
+        initial: 'ز',
+        avatar: 'https://cdn.discordapp.com/avatars/1356618809078841458/0f63dbb471d7a9e7907aeb326cf2c204.webp?size=256',
+        message: 'كل عام وأنت بخير يا دحوم ، وعسى سنينك الجاية أجمل مما تتمنى. وجودك بحياتنا مكسب، واليوم مو بس يوم ميلادك، هو يوم نحتفل فيه بأطيب أخ وأغلى رفيق. عسى ربي يديم عليك الصحة والعافية، ويكتب لك التوفيق وين ما رحت، ويحقق لك كل طموحاتك'
+      },
+      {
+        name: 'LKA3H',
+        initial: 'خ',
+        avatar: 'https://cdn.discordapp.com/avatars/1212190687659819041/cae6a777360f23e26f5fccc8c9f491a6.webp?size=256',
+        message: 'يا جعل أيامك كلها فرح وسعادة يا الدحمي، كل عام وأنت بخير يا ولد عمي . اليوم مو يوم عادي، اليوم يوم ميلاد شخص غالي وله معزّة ومكانة بقلبي. عسى عمرك طويل وأيامك حلوة مثل قلبك، وعسى ربي يكتب لك من الفرح أضعاف اللي تتمناه، ويحقق لك كل شيء بخاطرك يارفيقي .'
+      },
+      {
+        name: 'SEEN',
+        initial: 'ب',
+        avatar: 'https://cdn.discordapp.com/avatars/852692383178686495/aa348804a59d83cfc0f6cb8f2ea679a1.webp?size=256',
+        message: 'كل عام وأنت بخير يا ابو صلاح ، وعقبال العمر كله بصحة وعافية وسعادة. دمت عشير وأخ ورفيق درب، وعسى أيامك الجاية كلها نجاح وفرح يارب.'
+      }
+    ];
 
-        window.addEventListener('load', () => {
-            refreshAvatar();
-            setInterval(refreshAvatar, 60000);
+    const lettersList = document.getElementById('letters-list');
+    const openedCount = document.getElementById('opened-count');
+    const arabicDigits = new Intl.NumberFormat('ar-SA');
+
+    function makeCard(sender, index) {
+      const card = document.createElement('article');
+      card.className = 'letter-card';
+      const head = document.createElement('div');
+      head.className = 'sender';
+      const avatar = document.createElement('img');
+      avatar.className = 'sender-avatar';
+      avatar.src = sender.avatar;
+      avatar.alt = `أفتار ${sender.name}`;
+      avatar.loading = 'lazy';
+      const details = document.createElement('div');
+      const senderName = document.createElement('div');
+      senderName.className = 'sender-name';
+      senderName.textContent = sender.name;
+      const senderRole = document.createElement('div');
+      senderRole.className = 'sender-role';
+      senderRole.textContent = sender.role;
+      details.append(senderName, senderRole);
+      const icon = document.createElement('span');
+      icon.className = 'letter-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = '✉';
+      head.append(avatar, details, icon);
+
+      const envelope = document.createElement('button');
+      envelope.className = 'envelope-button';
+      envelope.type = 'button';
+      envelope.setAttribute('aria-expanded', 'false');
+      envelope.setAttribute('aria-label', `افتح رسالة ${sender.name}`);
+
+      const paper = document.createElement('span');
+      paper.className = 'letter-paper';
+      const label = document.createElement('span');
+      label.className = 'paper-label';
+      label.textContent = `رسالة ${arabicDigits.format(index + 1)} · بكل محبة`;
+      const preview = document.createElement('span');
+      preview.className = 'paper-preview';
+      preview.textContent = sender.message;
+      const full = document.createElement('span');
+      full.className = 'paper-full';
+      full.textContent = sender.message;
+      paper.append(label, preview, full);
+
+      const front = document.createElement('span');
+      front.className = 'envelope-front';
+      front.setAttribute('aria-hidden', 'true');
+      const to = document.createElement('span');
+      to.className = 'envelope-to';
+      to.textContent = 'إلى عبدالرحمن';
+      const seal = document.createElement('span');
+      seal.className = 'heart-seal';
+      seal.setAttribute('aria-hidden', 'true');
+      seal.textContent = '♥';
+      envelope.append(paper, front, to, seal);
+
+      const hint = document.createElement('div');
+      hint.className = 'open-hint';
+      hint.innerHTML = '<span aria-hidden="true">♥</span><span>اضغط القلب عشان تفتح الظرف</span>';
+      envelope.addEventListener('click', () => {
+        const isOpen = card.classList.toggle('is-open');
+        envelope.setAttribute('aria-expanded', String(isOpen));
+        envelope.setAttribute('aria-label', isOpen ? `رسالة ${sender.name} مفتوحة` : `افتح رسالة ${sender.name}`);
+        hint.lastElementChild.textContent = isOpen ? 'كلام من القلب، لك وحدك' : 'اضغط القلب عشان تفتح الظرف';
+        openedCount.textContent = arabicDigits.format(document.querySelectorAll('.letter-card.is-open').length);
+        if (isOpen) makeHearts(8, envelope);
+      });
+
+      card.append(head, envelope, hint);
+      return card;
+    }
+
+    senders.forEach((sender, index) => lettersList.appendChild(makeCard(sender, index)));
+
+    const ambient = document.getElementById('ambient');
+    const heartPositions = [
+      [5, 17, 28], [14, 65, 18], [23, 34, 14], [33, 84, 22], [42, 12, 16],
+      [56, 57, 24], [66, 23, 16], [74, 77, 14], [84, 39, 25], [94, 13, 15],
+      [9, 91, 13], [49, 91, 17], [91, 68, 18], [29, 8, 13], [61, 94, 12]
+    ];
+    heartPositions.forEach(([x, y, size], index) => {
+      const heart = document.createElement('span');
+      heart.className = 'ambient-heart';
+      heart.textContent = index % 3 === 0 ? '♥' : '♡';
+      heart.style.left = `${x}%`;
+      heart.style.top = `${y}%`;
+      heart.style.fontSize = `${size}px`;
+      heart.style.setProperty('--duration', `${13 + (index % 7) * 2}s`);
+      heart.style.setProperty('--delay', `${-index * 1.3}s`);
+      ambient.appendChild(heart);
+    });
+
+    function makeHearts(count, anchor) {
+      const rect = anchor.getBoundingClientRect();
+      for (let i = 0; i < count; i += 1) {
+        const heart = document.createElement('span');
+        heart.className = 'heart-pop';
+        heart.textContent = i % 2 ? '♡' : '♥';
+        heart.style.left = `${rect.left + Math.random() * rect.width}px`;
+        heart.style.top = `${rect.top + rect.height * .64}px`;
+        heart.style.fontSize = `${12 + Math.random() * 18}px`;
+        heart.style.setProperty('--drift', `${Math.round((Math.random() - .5) * 100)}px`);
+        document.body.appendChild(heart);
+        window.setTimeout(() => heart.remove(), 1750);
+      }
+    }
+
+    /* ===== الموسيقى (MP3) ===== */
+    const musicDock = document.getElementById('music-dock');
+    const musicTrigger = document.getElementById('music-trigger');
+    const musicStatus = document.getElementById('music-status');
+    const audio = document.getElementById('birthday-audio');
+
+    function setPlayingUI(isPlaying) {
+      musicDock.classList.toggle('is-playing', isPlaying);
+      musicStatus.textContent = isPlaying ? 'شغالة الآن — اضغط للإيقاف' : 'اضغط للتشغيل';
+    }
+
+    function toggleMusic() {
+      if (audio.paused) {
+        audio.play().then(() => setPlayingUI(true)).catch(() => {
+          musicStatus.textContent = 'تعذّر التشغيل — تأكد أن birthday.mp3 بجانب الملف';
         });
-
-        const cursorGlow = document.querySelector('.cursor-glow');
-
-        window.addEventListener('mousemove', (e) => {
-            cursorGlow.style.left = `${e.clientX}px`;
-            cursorGlow.style.top = `${e.clientY}px`;
-        });
-
-        window.addEventListener('touchmove', (e) => {
-            cursorGlow.style.left = `${e.touches[0].clientX}px`;
-            cursorGlow.style.top = `${e.touches[0].clientY}px`;
-        }, { passive: true });
-
-        window.addEventListener('mousedown', () => cursorGlow.classList.add('click-effect'));
-        window.addEventListener('mouseup', () => cursorGlow.classList.remove('click-effect'));
-        window.addEventListener('touchstart', () => cursorGlow.classList.add('click-effect'), { passive: true });
-        window.addEventListener('touchend', () => cursorGlow.classList.remove('click-effect'));
-
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'F12') e.preventDefault();
-            if (e.ctrlKey && e.shiftKey && e.key === 'I') e.preventDefault();
-            if (e.ctrlKey && e.shiftKey && e.key === 'J') e.preventDefault();
-            if (e.ctrlKey && e.key === 'u') e.preventDefault();
-            if (e.ctrlKey && e.key === 's') e.preventDefault();
-        });
-
-        document.addEventListener('dragstart', (e) => e.preventDefault());
-
-        (function() {
-            const botPatterns = [
-                'bot', 'crawler', 'spider', 'slurp', 'bingbot', 'googlebot',
-                'yandex', 'baidu', 'duckduckbot', 'facebot', 'ia_archiver',
-                'petalbot', 'semrush', 'ahrefs', 'mj12', 'screaming'
-            ];
-            const ua = navigator.userAgent.toLowerCase();
-
-            for (let pattern of botPatterns) {
-                if (ua.includes(pattern)) {
-                    document.body.innerHTML = '<h1 style="color:white;text-align:center;margin-top:50vh;">Access Denied</h1>';
-                    break;
-                }
-            }
-        })();
-
-        setInterval(() => {
-            if (window.outerWidth - window.innerWidth > 200 || window.outerHeight - window.innerHeight > 200) {
-                document.body.style.display = 'none';
-                alert('DevTools detected!');
-                setTimeout(() => { document.body.style.display = 'block'; }, 1000);
-            }
-        }, 2000);
-
-        const navbar = document.getElementById('navbar');
-
-        window.addEventListener('scroll', () => {
-            if (window.scrollY < 50) navbar.classList.add('nav-colored');
-            else navbar.classList.remove('nav-colored');
-        });
-
-        const sections = document.querySelectorAll('section');
-        const navItems = document.querySelectorAll('.nav-links a');
-
-        window.addEventListener('scroll', () => {
-            let current = '';
-
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                if (window.scrollY >= sectionTop - 250) current = section.getAttribute('id');
-            });
-
-            if (window.innerHeight + Math.round(window.scrollY) >= document.body.offsetHeight - 50) {
-                current = 'social';
-            }
-
-            navItems.forEach(item => {
-                item.classList.remove('active-link');
-                if (current && item.getAttribute('href').includes(current)) {
-                    item.classList.add('active-link');
-                }
-            });
-        });
-
-        const menuBtn = document.getElementById('menuBtn');
-        const navLinks = document.getElementById('navLinks');
-
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            navLinks.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!navLinks.contains(e.target) && !menuBtn.contains(e.target)) {
-                navLinks.classList.remove('active');
-            }
-        });
-
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => navLinks.classList.remove('active'));
-        });
-
-        function updateTime() {
-            const now = new Date();
-            const options = {
-                timeZone: 'Asia/Riyadh',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-            };
-            document.getElementById('terminal-clock').innerText = new Intl.DateTimeFormat('en-US', options).format(now);
-        }
-
-        setInterval(updateTime, 1000);
-        updateTime();
-
-        const animatedLogElement = document.getElementById('animated-log');
-        const dynamicLogElement = document.getElementById('dynamic-log');
-
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        function typeWriterPromise(text, isError, element) {
-            return new Promise((resolve) => {
-                element.style.color = isError ? 'var(--terminal-red)' : 'var(--terminal-green)';
-                element.innerHTML = '> ';
-                let i = 0;
-
-                function type() {
-                    if (i < text.length) {
-                        element.innerHTML += text.charAt(i);
-                        i++;
-                        setTimeout(type, 40);
-                    } else {
-                        element.innerHTML += ' <span class="blinking-cursor"></span>';
-                        resolve();
-                    }
-                }
-
-                type();
-            });
-        }
-
-        const sessions = [
-            {
-                logs: [
-                    { text: 'Mounting file systems...', error: false },
-                    { text: 'Loading AI core modules...', error: false },
-                    { text: '[ERROR] Access Denied. Bypassing firewall...', error: true },
-                    { text: 'Bypass successful. Syncing data...', error: false },
-                    { text: 'Fetching user preferences...', error: false },
-                    { text: '[WARN] Memory leak detected in script.js', error: true },
-                    { text: 'System fully operational.', error: false }
-                ],
-                dynamicUpdates: [
-                    'System status: operational',
-                    'CPU load: 12% normal',
-                    'Memory usage: 42%',
-                    'Network: stable latency 15ms',
-                    'Firewall: active 3 blocked attempts'
-                ]
-            },
-            {
-                logs: [
-                    { text: 'Initializing security protocols...', error: false },
-                    { text: 'Checking kernel integrity...', error: false },
-                    { text: '[CRITICAL] Rootkit detected in sys kernel', error: true },
-                    { text: 'Quarantining malicious files...', error: false },
-                    { text: 'Restoring from backup...', error: false },
-                    { text: 'Integrity check passed.', error: false }
-                ],
-                dynamicUpdates: [
-                    'Threat neutralized: 2 files quarantined',
-                    'System scan: 100% complete',
-                    'No further threats found',
-                    'Logs uploaded to secure server'
-                ]
-            },
-            {
-                logs: [
-                    { text: 'Connecting to secure shell...', error: false },
-                    { text: 'Authenticating user: ShadowBound', error: false },
-                    { text: '[WARN] Unusual login attempt blocked', error: true },
-                    { text: 'Two factor authentication successful', error: false },
-                    { text: 'Access granted. Welcome back.', error: false }
-                ],
-                dynamicUpdates: [
-                    'Last login: today at 14:32:07',
-                    'New IP whitelisted: 203.0.113.7',
-                    'Session timeout set to 30 minutes',
-                    'Encrypted channel established'
-                ]
-            }
-        ];
-
-        let sessionIndex = 0;
-
-        async function runSession(session) {
-            animatedLogElement.innerHTML = '';
-            dynamicLogElement.innerHTML = '';
-
-            for (let i = 0; i < session.logs.length; i++) {
-                const log = session.logs[i];
-                await typeWriterPromise(log.text, log.error, animatedLogElement);
-                await sleep(400);
-            }
-
-            for (let j = 0; j < session.dynamicUpdates.length; j++) {
-                dynamicLogElement.innerHTML = '> ' + session.dynamicUpdates[j] + ' <span class="blinking-cursor"></span>';
-                await sleep(1800);
-            }
-
-            dynamicLogElement.innerHTML = '';
-            await sleep(1000);
-        }
-
-        async function startTerminalLoop() {
-            while (true) {
-                await runSession(sessions[sessionIndex]);
-                sessionIndex = (sessionIndex + 1) % sessions.length;
-            }
-        }
-
-        window.addEventListener('load', () => startTerminalLoop());
-
-        setInterval(() => {
-            const latencyElement = document.getElementById('ping-latency');
-            const randomPing = Math.floor(Math.random() * (45 - 12 + 1)) + 12;
-            latencyElement.innerText = randomPing + 'ms';
-        }, 3000);
-
-        const langToggleDesktop = document.getElementById('langToggleDesktop');
-        const langToggleMobile = document.getElementById('langToggleMobile');
-        const translatableElements = document.querySelectorAll('[data-ar]');
-        let currentLang = 'ar';
-
-        function toggleLanguage() {
-            if (currentLang === 'ar') {
-                currentLang = 'en';
-                document.documentElement.lang = 'en';
-                document.documentElement.dir = 'ltr';
-                langToggleDesktop.innerText = 'AR';
-                langToggleMobile.innerText = 'AR';
-            } else {
-                currentLang = 'ar';
-                document.documentElement.lang = 'ar';
-                document.documentElement.dir = 'rtl';
-                langToggleDesktop.innerText = 'EN';
-                langToggleMobile.innerText = 'EN';
-            }
-
-            translatableElements.forEach(el => {
-                const translatedText = el.getAttribute(`data-${currentLang}`);
-                if (translatedText !== null) el.innerText = translatedText;
-            });
-        }
-
-        langToggleDesktop.addEventListener('click', toggleLanguage);
-
-        langToggleMobile.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleLanguage();
-        });
-
-        const projectCards = document.querySelectorAll('.project-card');
-        const activityCard = document.getElementById('activityCard');
-        const modalOverlay = document.getElementById('projectModal');
-        const modalClose = document.getElementById('modalClose');
-        const modalIcon = document.getElementById('modalIcon');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalDesc = document.getElementById('modalDesc');
-        const modalTech = document.getElementById('modalTech');
-        const modalLink = document.getElementById('modalLink');
-
-        const STATUS_LABELS = { live: 'Live', dev: 'In Dev', beta: 'Beta' };
-
-        projectCards.forEach(card => {
-            const status = card.dataset.status;
-            if (status && !card.querySelector('.project-status')) {
-                const badge = document.createElement('span');
-                badge.className = 'project-status';
-                badge.dataset.status = status;
-                badge.innerHTML = `<span class="status-dot"></span><span>${STATUS_LABELS[status] || status}</span>`;
-                card.appendChild(badge);
-            }
-
-            const tech = card.dataset.tech;
-            if (tech && !card.querySelector('.project-tech-tags')) {
-                const tagsContainer = document.createElement('div');
-                tagsContainer.className = 'project-tech-tags';
-                tech.split(',').forEach(item => {
-                    const chip = document.createElement('span');
-                    chip.textContent = item.trim();
-                    tagsContainer.appendChild(chip);
-                });
-                card.appendChild(tagsContainer);
-            }
-
-            card.addEventListener('mousemove', (e) => {
-                if (window.innerWidth <= 768) return;
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = ((y - centerY) / centerY) * -10;
-                const rotateY = ((x - centerX) / centerX) * 10;
-
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-                card.style.setProperty('--mouse-x', `${x}px`);
-                card.style.setProperty('--mouse-y', `${y}px`);
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)`;
-            });
-
-            card.addEventListener('click', () => openProjectModal(card));
-        });
-
-        activityCard.addEventListener('mousemove', (e) => {
-            if (window.innerWidth <= 768) return;
-            const rect = activityCard.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = ((y - centerY) / centerY) * -8;
-            const rotateY = ((x - centerX) / centerX) * 8;
-
-            activityCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-        });
-
-        activityCard.addEventListener('mouseleave', () => {
-            activityCard.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)`;
-        });
-
-
-        function openProjectModal(card) {
-            const lang = document.documentElement.lang || 'ar';
-            const suffix = lang === 'ar' ? 'Ar' : 'En';
-
-            const title = card.dataset.titleEn || card.querySelector('.project-title')?.textContent?.trim() || '';
-            const details = card.dataset[`details${suffix}`] || '';
-            const tech = card.dataset.tech || '';
-            const link = card.dataset.link || '';
-            const iconClass = card.dataset.icon || 'fa-code';
-
-            modalIcon.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
-            modalTitle.innerText = title;
-            modalDesc.innerText = details;
-
-            modalTech.innerHTML = '';
-
-            if (tech) {
-                tech.split(',').forEach(item => {
-                    const span = document.createElement('span');
-                    span.innerText = item.trim();
-                    modalTech.appendChild(span);
-                });
-            }
-
-            if (link && link.startsWith('https://')) {
-                modalLink.href = link;
-                modalLink.style.display = 'table';
-            } else {
-                modalLink.removeAttribute('href');
-                modalLink.style.display = 'none';
-            }
-
-            modalOverlay.classList.add('active');
-        }
-
-        function closeModal() {
-            modalOverlay.classList.remove('active');
-        }
-
-        modalClose.addEventListener('click', closeModal);
-
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) closeModal();
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modalOverlay.classList.contains('active')) closeModal();
-        });
-
-        const LANYARD_WS_URL = 'wss://api.lanyard.rest/socket';
-        const CODE_APPS = /visual studio|vs ?code|code - oss|vscodium|cursor|intellij|pycharm|webstorm|phpstorm|clion|rider|android studio|sublime|neovim|vim|atom|notepad\+\+|replit|codespaces|eclipse|zed|termux/i;
-
-        const ACTIVITY_TEXT = {
-            online: 'Online', idle: 'Idle', dnd: 'Do Not Disturb', offline: 'Offline',
-            playing: 'Playing', listening: 'Listening to Spotify', watching: 'Watching',
-            streaming: 'Streaming', competing: 'Competing in', coding: 'Coding',
-            none: 'No activity right now', connecting: 'Connecting...'
-        };
-
-        const activityDot = document.getElementById('activityDot');
-        const activityStatusText = document.getElementById('activityStatusText');
-        const activityCustom = document.getElementById('activityCustom');
-        const activityList = document.getElementById('activityList');
-
-        let lanyardData = null;
-        let lanyardSocket = null;
-        let lanyardHeartbeat = null;
-
-        function escapeHTML(value) {
-            return String(value == null ? '' : value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        function formatDuration(ms) {
-            const total = Math.floor(Math.max(0, ms) / 1000);
-            const h = Math.floor(total / 3600);
-            const m = Math.floor((total % 3600) / 60);
-            const s = total % 60;
-            const pad = (n) => String(n).padStart(2, '0');
-            return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-        }
-
-        function getActivityArt(activity) {
-            const assets = activity.assets;
-            if (assets && assets.large_image) {
-                const img = assets.large_image;
-                if (img.startsWith('mp:external/')) return 'https://media.discordapp.net/external/' + img.slice(12);
-                if (img.startsWith('mp:')) return 'https://media.discordapp.net/' + img.slice(3);
-                if (activity.application_id) return `https://cdn.discordapp.com/app-assets/${activity.application_id}/${img}.png`;
-            }
-            return '';
-        }
-
-        function getActivityKind(activity) {
-            if (activity.id === 'spotify:1' || activity.type === 2) return 'listening';
-            if (CODE_APPS.test(activity.name || '')) return 'coding';
-            if (activity.type === 1) return 'streaming';
-            if (activity.type === 3) return 'watching';
-            if (activity.type === 5) return 'competing';
-            return 'playing';
-        }
-
-        function getKindIcon(kind) {
-            return {
-                listening: 'fa-music',
-                coding: 'fa-code',
-                streaming: 'fa-tower-broadcast',
-                watching: 'fa-eye',
-                competing: 'fa-trophy',
-                playing: 'fa-gamepad'
-            }[kind] || 'fa-gamepad';
-        }
-
-        function buildActivityItem(activity, t) {
-            const kind = getActivityKind(activity);
-            const spotify = kind === 'listening' && lanyardData.listening_to_spotify && lanyardData.spotify ? lanyardData.spotify : null;
-            const art = spotify ? spotify.album_art_url : getActivityArt(activity);
-            const start = spotify ? spotify.timestamps.start : (activity.timestamps && activity.timestamps.start) || 0;
-            const end = spotify ? spotify.timestamps.end : (activity.timestamps && activity.timestamps.end) || 0;
-
-            const name = spotify ? spotify.song : activity.name;
-            const line1 = spotify ? spotify.artist.replace(/;/g, ',') : (activity.details || '');
-            const line2 = spotify ? spotify.album : (activity.state || '');
-
-            let timeHTML = '';
-
-            if (spotify || (start && end)) {
-                timeHTML = `<div class="activity-time"><span data-role="cur">00:00</span><div class="activity-bar"><span data-role="bar"></span></div><span data-role="total">${formatDuration(end - start)}</span></div>`;
-            } else if (start) {
-                timeHTML = `<div class="activity-time"><i class="fa-regular fa-clock"></i><span data-role="elapsed">00:00</span></div>`;
-            }
-
-            return `
-                <div class="activity-item" data-start="${start}" data-end="${end}">
-                    <div class="activity-art">
-                        <i class="fa-solid ${getKindIcon(kind)}"></i>
-                        ${art ? `<img src="${escapeHTML(art)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
-                    </div>
-                    <div class="activity-info">
-                        <span class="activity-type">${t[kind]}</span>
-                        <h4 class="activity-name">${escapeHTML(name)}</h4>
-                        ${line1 ? `<p class="activity-line">${escapeHTML(line1)}</p>` : ''}
-                        ${line2 ? `<p class="activity-line">${escapeHTML(line2)}</p>` : ''}
-                        ${timeHTML}
-                    </div>
-                </div>`;
-        }
-
-        function renderActivity() {
-            const t = ACTIVITY_TEXT;
-
-            if (!lanyardData) {
-                activityDot.dataset.s = 'offline';
-                activityStatusText.textContent = t.connecting;
-                activityCustom.textContent = '';
-                activityList.innerHTML = '';
-                return;
-            }
-
-            const status = lanyardData.discord_status || 'offline';
-            activityDot.dataset.s = status;
-            activityStatusText.textContent = t[status] || status;
-
-            const activities = Array.isArray(lanyardData.activities) ? lanyardData.activities : [];
-            const custom = activities.find(a => a.type === 4);
-
-            if (custom) {
-                const emoji = custom.emoji && custom.emoji.name && !custom.emoji.id ? custom.emoji.name + ' ' : '';
-                activityCustom.textContent = emoji + (custom.state || '');
-            } else {
-                activityCustom.textContent = '';
-            }
-
-            const visible = activities.filter(a => a.type !== 4).slice(0, 3);
-
-            if (status === 'offline' || visible.length === 0) {
-                activityList.innerHTML = `<div class="activity-empty"><i class="fa-solid fa-moon"></i><span>${t.none}</span></div>`;
-                return;
-            }
-
-            activityList.innerHTML = visible.map(a => buildActivityItem(a, t)).join('');
-            tickActivity();
-        }
-
-        function tickActivity() {
-            const now = Date.now();
-
-            activityList.querySelectorAll('.activity-item').forEach(item => {
-                const start = Number(item.dataset.start) || 0;
-                const end = Number(item.dataset.end) || 0;
-                const cur = item.querySelector('[data-role="cur"]');
-                const bar = item.querySelector('[data-role="bar"]');
-                const elapsed = item.querySelector('[data-role="elapsed"]');
-
-                if (cur && bar && start && end) {
-                    const progress = Math.min(Math.max(now - start, 0), end - start);
-                    cur.textContent = formatDuration(progress);
-                    bar.style.width = `${(progress / (end - start)) * 100}%`;
-                }
-
-                if (elapsed && start) {
-                    elapsed.textContent = formatDuration(now - start);
-                }
-            });
-        }
-
-        setInterval(tickActivity, 1000);
-
-        function connectLanyard() {
-            try {
-                lanyardSocket = new WebSocket(LANYARD_WS_URL);
-            } catch (e) {
-                setTimeout(connectLanyard, 5000);
-                return;
-            }
-
-            lanyardSocket.onmessage = (event) => {
-                let message;
-                try { message = JSON.parse(event.data); } catch (e) { return; }
-
-                if (message.op === 1) {
-                    lanyardSocket.send(JSON.stringify({ op: 2, d: { subscribe_to_id: DISCORD_USER_ID } }));
-                    clearInterval(lanyardHeartbeat);
-                    lanyardHeartbeat = setInterval(() => {
-                        if (lanyardSocket.readyState === 1) lanyardSocket.send(JSON.stringify({ op: 3 }));
-                    }, message.d.heartbeat_interval);
-                } else if (message.op === 0 && (message.t === 'INIT_STATE' || message.t === 'PRESENCE_UPDATE')) {
-                    lanyardData = message.d;
-                    renderActivity();
-                }
-            };
-
-            lanyardSocket.onclose = () => {
-                clearInterval(lanyardHeartbeat);
-                setTimeout(connectLanyard, 5000);
-            };
-
-            lanyardSocket.onerror = () => lanyardSocket.close();
-        }
-
-        async function fetchInitialPresence() {
-            try {
-                const res = await fetch(`https://api.lanyard.rest/v1/users/${DISCORD_USER_ID}`, { cache: 'no-store' });
-                const json = await res.json();
-                if (json.success && json.data && !lanyardData) {
-                    lanyardData = json.data;
-                    renderActivity();
-                }
-            } catch (e) {}
-        }
-
-        renderActivity();
-        fetchInitialPresence();
-        connectLanyard();
-    </script>
+      } else {
+        audio.pause();
+        setPlayingUI(false);
+      }
+    }
+
+    audio.addEventListener('play', () => setPlayingUI(true));
+    audio.addEventListener('pause', () => setPlayingUI(false));
+    audio.addEventListener('error', () => {
+      musicStatus.textContent = 'الملف birthday.mp3 غير موجود';
+    });
+
+    musicTrigger.addEventListener('click', toggleMusic);
+    document.getElementById('musicCta').addEventListener('click', () => {
+      if (audio.paused) toggleMusic();
+      else {
+        audio.currentTime = 0;
+        audio.play();
+      }
+    });
+  </script>
 </body>
 </html>
