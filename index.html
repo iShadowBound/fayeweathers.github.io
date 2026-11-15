@@ -4,7 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#070a18">
-  <meta name="description" content="عيد ميلاد سعيد يا عبدالرحمن — رسائل من أصحابك، داخل أظرف وبكل حب.">
+  <meta name="description" content="كل عام وأنت بخير يا عبدالرحمن.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="عيد ميلاد سعيد يا عبدالرحمن">
+  <meta property="og:description" content="كل عام وأنت بخير يا عبدالرحمن.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="عيد ميلاد سعيد يا عبدالرحمن">
+  <meta name="twitter:description" content="كل عام وأنت بخير يا عبدالرحمن.">
   <title>عيد ميلاد سعيد يا عبدالرحمن</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -312,7 +318,7 @@
     </button>
   </aside>
 
-  <audio id="birthday-audio" src="birthday.mp3" preload="auto" loop autoplay></audio>
+  <audio id="birthday-audio" src="birthday.mp3" preload="auto" loop autoplay muted playsinline></audio>
 
   <script>
     const senders = [
@@ -446,40 +452,51 @@
       }
     }
 
-    /* ===== الموسيقى (MP3) — تشتغل تلقائياً ===== */
     const musicDock = document.getElementById('music-dock');
     const musicTrigger = document.getElementById('music-trigger');
     const musicStatus = document.getElementById('music-status');
     const audio = document.getElementById('birthday-audio');
     audio.volume = 0.75;
-
-    let needsUnmute = false;
+    audio.muted = true;
+    let needsUnmute = true;
 
     function setPlayingUI(isPlaying) {
       musicDock.classList.toggle('is-playing', isPlaying);
       if (isPlaying) {
         musicStatus.textContent = needsUnmute
-          ? 'الصوت مكتوم — اضغط في أي مكان لتشغيله'
+          ? 'تعمل بصمت — اضغط لتشغيل الصوت'
           : 'شغالة الآن — اضغط للإيقاف';
       } else {
         musicStatus.textContent = 'اضغط للتشغيل';
       }
     }
 
-    function unmuteAudio() {
+    async function unmuteAudio() {
       if (!needsUnmute) return;
       needsUnmute = false;
       audio.muted = false;
-      if (audio.paused) audio.play().catch(() => {});
-      setPlayingUI(true);
+      try {
+        if (audio.paused) await audio.play();
+        setPlayingUI(true);
+      } catch {
+        needsUnmute = true;
+        audio.muted = true;
+        setPlayingUI(false);
+      }
     }
 
-    function toggleMusic() {
-      if (needsUnmute) { unmuteAudio(); return; }
+    async function toggleMusic() {
+      if (needsUnmute) {
+        await unmuteAudio();
+        return;
+      }
       if (audio.paused) {
-        audio.play().then(() => setPlayingUI(true)).catch(() => {
+        try {
+          await audio.play();
+          setPlayingUI(true);
+        } catch {
           musicStatus.textContent = 'تعذّر التشغيل — تأكد أن birthday.mp3 بجانب الملف';
-        });
+        }
       } else {
         audio.pause();
         setPlayingUI(false);
@@ -493,48 +510,27 @@
     });
 
     musicTrigger.addEventListener('click', toggleMusic);
-    document.getElementById('musicCta').addEventListener('click', () => {
-      if (needsUnmute) { unmuteAudio(); return; }
-      if (audio.paused) toggleMusic();
-      else { audio.currentTime = 0; audio.play().catch(() => {}); }
+    document.getElementById('musicCta').addEventListener('click', async () => {
+      if (needsUnmute) {
+        await unmuteAudio();
+        return;
+      }
+      if (audio.paused) {
+        await toggleMusic();
+      } else {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
     });
 
-    /* ===== محاولة تشغيل الأغنية تلقائياً ===== */
-    function tryAutoplay() {
-      audio.muted = false;
-      const p = audio.play();
-      if (!p || typeof p.then !== 'function') return;
+    document.addEventListener('pointerdown', unmuteAudio);
+    document.addEventListener('keydown', unmuteAudio);
 
-      p.then(() => {
-        setPlayingUI(true);
-      }).catch(() => {
-        // محاولة 2: تشغيل مكتوم (مسموح في أغلب المتصفحات)
-        audio.muted = true;
-        audio.play().then(() => {
-          needsUnmute = true;
-          setPlayingUI(true);
-          // أي ضغطة/مفتاح يفتح الصوت تلقائياً
-          document.addEventListener('click', unmuteAudio, { once: true });
-          document.addEventListener('keydown', unmuteAudio, { once: true });
-        }).catch(() => {
-          // محاولة 3: انتظار أول تفاعل من المستخدم
-          musicStatus.textContent = 'اضغط في أي مكان لتشغيل الأغنية';
-          const startOnGesture = () => {
-            audio.muted = false;
-            audio.play().then(() => setPlayingUI(true)).catch(() => {});
-          };
-          document.addEventListener('click', startOnGesture, { once: true });
-          document.addEventListener('keydown', startOnGesture, { once: true });
-          document.addEventListener('touchstart', startOnGesture, { once: true, passive: true });
-        });
-      });
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', tryAutoplay);
-    } else {
-      tryAutoplay();
-    }
+    audio.play().then(() => {
+      setPlayingUI(true);
+    }).catch(() => {
+      musicStatus.textContent = 'اضغط في أي مكان لتشغيل الأغنية';
+    });
   </script>
 </body>
 </html>
